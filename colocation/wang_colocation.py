@@ -25,7 +25,13 @@ class WangColocation(BaseColocation):
         self.locations = location_data
         self.t_tolerance = 1
 
-    def get_delta_t(self):
+    def get_delta_t(self) -> Numeric:
+        """
+        Get the time difference that we permit between observations in order
+        for them to count towards spatio-temporal co-location.
+
+        :return: Numeric value of time tolerance.
+        """
         return self.t_tolerance
 
     @staticmethod
