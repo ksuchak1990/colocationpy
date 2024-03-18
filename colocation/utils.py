@@ -41,7 +41,18 @@ def run_dx_dt(lowerx, upperx, nx,
     return cols
 
 
-def pivot_outputs(df, i="dx", c="dt", v="colocation_rate"):
+def pivot_outputs(
+    df: pd.DataFrame, i: str = "dx", c: str = "dt", v: str = "colocation_rate"
+):
+    """
+    Pivot DataFrame of outputs by the deltas in preparation of making a heatmap
+    of Co-Location rates.
+
+    :param df: DataFrame of calculation outputs
+    :param i: Index variable name
+    :param c: Column variable name
+    :param v: Variable name for values in pivot table
+    """
     pivotted = df.pivot(index=i, columns=c, values=v)
     pivotted = pivotted.iloc[::-1]
     return pivotted
