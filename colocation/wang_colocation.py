@@ -66,8 +66,14 @@ class WangColocation(BaseColocation):
         probabilities = np.array(probabilities)
         return np.argmax(probabilities, axis=0)[1]
 
-    def get_probability_of_visit(self, user_id: int,
-                                 location_id: int) -> float:
+    def get_probability_of_visit(self, user_id: int, location_id: int) -> float:
+        """
+        Calculate the probability of a user visiting a particular location.
+
+        :param user_id: The ID of the user
+        :param location_id: The ID of the location
+        :return: The probability of the user visiting the location
+        """
         tdf = self.data.loc[self.data["userID"] == user_id, :]
         n_user = self.get_number_of_observations(user_id)
         locations = list(tdf["locationID"])
