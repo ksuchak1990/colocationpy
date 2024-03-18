@@ -97,6 +97,12 @@ class WangColocation(BaseColocation):
         return len(tdf)
 
     def get_individual_by_id(self, user_id: int) -> pd.DataFrame:
+        """
+        Get subset of data for a specific user based on their ID
+
+        :param user_id: ID of user
+        :return: DataFrame of data subset
+        """
         tdf = self.data.loc[self.data["userID"] == user_id, :]
         return tdf
 
