@@ -107,6 +107,14 @@ class WangColocation(BaseColocation):
         return tdf
 
     def get_ith_location_id(self, user_id: int, i: int) -> int:
+        """
+        Get the $i$th location of a given user.
+
+        :param user_id: ID of user
+        :param i: Index of observation that want to get
+        :return: ID of location where we find the user in their $i$th
+        observation
+        """
         tdf = self.get_individual_by_id(user_id)
         return tdf.iloc[i]["locationID"]
 
