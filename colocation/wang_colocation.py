@@ -10,6 +10,10 @@ from colocation.base_colocation import BaseColocation
 
 
 class WangColocation(BaseColocation):
+    """
+    A class to perform colocation in the manner laid out by Wang et al. (2011).
+    """
+
     def __init__(
         self, population_data: pd.DataFrame, location_data: pd.DataFrame
     ) -> None:
