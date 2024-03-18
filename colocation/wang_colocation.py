@@ -132,6 +132,12 @@ class WangColocation(BaseColocation):
         return tdf.iloc[i]["time"]
 
     def get_coords_of_location(self, location_id: int) -> Coordinate:
+        """
+        Find the coordinates of a specific location given its ID.
+
+        :param location_id: ID of location
+        :return: Coordinate pair of location
+        """
         mask = self.locations["locationID"] == location_id
         c = self.locations.loc[mask, ["x", "y"]]
         coords = (c.iloc[0]["x"], c.iloc[0]["y"])
