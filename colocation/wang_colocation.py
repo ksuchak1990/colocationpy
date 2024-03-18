@@ -166,8 +166,19 @@ class WangColocation(BaseColocation):
 
         return total
 
-    def get_heaviside_input(self, individual1: int, individual2: int,
-                            index1: int, index2: int) -> int:
+    def get_heaviside_input(
+        self, individual1: int, individual2: int, index1: int, index2: int
+    ) -> Numeric:
+        """
+        Get the difference between the time threshold and the interval between
+        two observations of two users.
+
+        :param individual1: ID of individual 1
+        :param individual2: ID of individual 2
+        :param index1: Index of observation of individual 1
+        :param index2: Index of observation of individual 2
+        :return: Difference between threshold and interval
+        """
         delta_t = self.get_delta_t()
         time1 = self.get_ith_time(individual1, index1)
         time2 = self.get_ith_time(individual2, index2)
