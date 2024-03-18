@@ -186,6 +186,13 @@ class WangColocation(BaseColocation):
         return delta_t - abs(time_diff)
 
     def get_CoL(self, individual1: int, individual2: int) -> float:
+        """
+        Calculate the Co-Location Rate for two individuals.
+
+        :param individual1: ID of individual 1
+        :param individual2: ID of individual 2
+        :return: Co-Location Rate for the two given individuals
+        """
         number1 = self.get_number_of_observations(individual1)
         number2 = self.get_number_of_observations(individual2)
 
@@ -194,9 +201,9 @@ class WangColocation(BaseColocation):
 
         for i in range(number1):
             for j in range(number2):
-                heaviside_input = self.get_heaviside_input(individual1,
-                                                           individual2,
-                                                           i, j)
+                heaviside_input = self.get_heaviside_input(
+                    individual1, individual2, i, j
+                )
                 common = np.heaviside(heaviside_input, 1)
 
                 bottom_total += common
