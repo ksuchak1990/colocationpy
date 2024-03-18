@@ -3,14 +3,15 @@ A class to calculate the colocation rate based on Wang et al. (2011)
 """
 
 # Imports
-from typing import Tuple, Union
+from typing import Tuple, TypeAlias, Union
 import numpy as np
 import pandas as pd
 from colocation.base_colocation import BaseColocation
 
 
-# Define numeric type
+# Define types
 Numeric = Union[int, float]
+Coordinate: TypeAlias = Tuple[float, float]
 
 
 class WangColocation(BaseColocation):
@@ -130,7 +131,7 @@ class WangColocation(BaseColocation):
         tdf = self.get_individual_by_id(user_id)
         return tdf.iloc[i]["time"]
 
-    def get_coords_of_location(self, location_id: int) -> Tuple[float, float]:
+    def get_coords_of_location(self, location_id: int) -> Coordinate:
         mask = self.locations["locationID"] == location_id
         c = self.locations.loc[mask, ["x", "y"]]
         coords = (c.iloc[0]["x"], c.iloc[0]["y"])
