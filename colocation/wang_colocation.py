@@ -3,10 +3,14 @@ A class to calculate the colocation rate based on Wang et al. (2011)
 """
 
 # Imports
-from typing import Tuple
+from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 from colocation.base_colocation import BaseColocation
+
+
+# Define numeric type
+Numeric = Union[int, float]
 
 
 class WangColocation(BaseColocation):
