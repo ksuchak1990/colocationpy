@@ -1,12 +1,18 @@
 """
 A collection of utility functions.
 """
+
+from typing import Tuple, TypeAlias, Union
 import numpy as np
-from typing import Tuple
+import pandas as pd
+
+# Define types
+Numeric = Union[int, float]
+Coordinate: TypeAlias = Tuple[float, float]
 
 
-def get_distance(location1: Tuple[float, float],
-                 location2: Tuple[float, float]) -> float:
+# Functions
+def get_distance(location1: Coordinate, location2: Coordinate) -> float:
     """
     A method to get calculate the Euclidean distance between two points.
 
@@ -18,7 +24,7 @@ def get_distance(location1: Tuple[float, float],
     """
     x_diff = location1[0] - location2[0]
     y_diff = location1[1] - location2[1]
-    return (x_diff**2 + y_diff**2)**0.5
+    return (x_diff**2 + y_diff**2) ** 0.5
 
 
 def run_dx_dt(lowerx, upperx, nx,
