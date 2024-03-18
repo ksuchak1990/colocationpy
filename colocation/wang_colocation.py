@@ -119,6 +119,14 @@ class WangColocation(BaseColocation):
         return tdf.iloc[i]["locationID"]
 
     def get_ith_time(self, user_id: int, i: int) -> int:
+        """
+        Get the time attached to the $i$th observation of a given user.
+
+        :param user_id: ID of user
+        :param i: Index of observation that want to get
+        :return: Time attached to observation of user in their $i$th
+        observation
+        """
         tdf = self.get_individual_by_id(user_id)
         return tdf.iloc[i]["time"]
 
