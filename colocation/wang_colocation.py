@@ -36,6 +36,16 @@ class WangColocation(BaseColocation):
 
     @staticmethod
     def get_delta_x(a: int, b: int) -> int:
+        """
+        Get the locational difference between two locations. This method checks
+        that two locations are the same, i.e.
+        "location a is the same as location b"
+
+        :param a: Location ID A
+        :param b: Location ID B
+        :return: 1 if the locations are the same, and 0 otherwise.
+
+        """
         return 1 if a == b else 0
 
     def get_most_likely_location(self, user_id: int) -> int:
