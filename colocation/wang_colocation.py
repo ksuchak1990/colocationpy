@@ -87,6 +87,12 @@ class WangColocation(BaseColocation):
         return total
 
     def get_number_of_observations(self, user_id: int) -> int:
+        """
+        Get the number of observations of a specific user.
+
+        :param user_id: ID of user
+        :return: Number of observations in data
+        """
         tdf = self.data.loc[self.data["userID"] == user_id, :]
         return len(tdf)
 
