@@ -144,6 +144,18 @@ class WangColocation(BaseColocation):
         return coords
 
     def get_SCoL(self, individual1: int, individual2: int) -> float:
+        """
+        Calculate the Spatial Co-Location rate for two individuals. For a
+        mathematical definition, see:
+        Wang, D., Pedreschi, D., Song, C., Giannotti, F. and Barabasi, A.L.,
+        2011, August. Human mobility, social ties, and link prediction.
+        In Proceedings of the 17th ACM SIGKDD international conference on
+        Knowledge discovery and data mining (pp. 1100-1108).
+
+        :param individual1: ID of individual 1
+        :param individual2: ID of individual 2
+        :return: Rate of spatial co-location, 0 <= r <= 1
+        """
         total = 0
 
         for loc in self.data["locationID"].unique():
