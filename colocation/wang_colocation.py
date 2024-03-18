@@ -49,6 +49,13 @@ class WangColocation(BaseColocation):
         return 1 if a == b else 0
 
     def get_most_likely_location(self, user_id: int) -> int:
+        """
+        Identify the most likely location for a user to be.
+
+        :param user_id: The ID of the user
+        :return: The ID of the location where we are mostly likely to find the
+        user.
+        """
         locs = self.data["locationID"].unique()
         probabilities = []
 
