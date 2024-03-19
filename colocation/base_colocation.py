@@ -14,6 +14,12 @@ class BaseColocation:
         self.validate_data(data)
 
     def validate_data(self, data: pd.DataFrame) -> None:
+        """
+        Ensure that the data provided has the appropriate columns.
+
+        :param data: DataFrame containing observations of individuals
+        :raises ValueError: Alerts of missing columns
+        """
         missing_cols = []
         for col in self.required_columns:
             if col not in list(data):
