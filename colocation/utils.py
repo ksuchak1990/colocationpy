@@ -3,8 +3,11 @@ A collection of utility functions.
 """
 
 from typing import Tuple, TypeAlias, Union
+
 import numpy as np
 import pandas as pd
+
+from colocation.base_colocation import BaseColocation
 
 # Define types
 Numeric = Union[int, float]
@@ -27,9 +30,30 @@ def get_distance(location1: Coordinate, location2: Coordinate) -> float:
     return (x_diff**2 + y_diff**2) ** 0.5
 
 
-def run_dx_dt(lowerx, upperx, nx,
-              lowert, uppert, nt,
-              data, locations, colocation_class):
+def run_dx_dt(
+    lowerx: Numeric,
+    upperx: Numeric,
+    nx: Numeric,
+    lowert: Numeric,
+    uppert: Numeric,
+    nt: Numeric,
+    data: pd.DataFrame,
+    locations: pd.DataFrame,
+    colocation_class: BaseColocation,
+):
+    """
+    Run a colocator for a range of $x$- and $t$-tolerances.
+
+    :param lowerx: Lower bound for $x$-tolerance
+    :param upperx: Upper bound for $x$-tolerance
+    :param nx: Number of $x$-tolerances to try
+    :param lowert: Lower bound for $t$-tolerance
+    :param uppert: Upper bound for $t$-tolerance
+    :param nt: Number of $t$-tolerances to try
+    :param data: DataFrame of observations of individuals
+    :param locations: Discrete locations at which individuals may be found
+    :param colocation_class: Colocator to be used
+    """
     cols = []
 
     for dx in np.linspace(lowerx, upperx, nx):
