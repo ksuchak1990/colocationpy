@@ -5,6 +5,7 @@ A class to calculate the colocation rate based on Wang et al. (2011)
 # Imports
 import numpy as np
 import pandas as pd
+
 from colocation.base_colocation import BaseColocation
 from colocation.utils import Coordinate, Numeric
 
@@ -21,14 +22,16 @@ class WangColocation(BaseColocation):
         self.locations = location_data
         self.t_tolerance = 1
 
-    def get_delta_t(self) -> Numeric:
+    @staticmethod
+    def get_delta_t(a: Numeric, b: Numeric) -> Numeric:
         """
-        Get the time difference that we permit between observations in order
-        for them to count towards spatio-temporal co-location.
+        Get the temporal difference between two observations.
 
-        :return: Numeric value of time tolerance.
+        :param a: The time of the first observation
+        :param b: The time of the second observation
+        :return: Time difference between two observations
         """
-        return self.t_tolerance
+        return abs(a - b)
 
     @staticmethod
     def get_delta_x(a: int, b: int) -> int:
@@ -39,7 +42,7 @@ class WangColocation(BaseColocation):
 
         :param a: Location ID A
         :param b: Location ID B
-        :return: 1 if the locations are the same, and 0 otherwise.
+        :return: 1 if the locations are the same, and 0 otherwise
 
         """
         return 1 if a == b else 0
@@ -174,11 +177,10 @@ class WangColocation(BaseColocation):
         :param index2: Index of observation of individual 2
         :return: Difference between threshold and interval
         """
-        delta_t = self.get_delta_t()
         time1 = self.get_ith_time(individual1, index1)
         time2 = self.get_ith_time(individual2, index2)
-        time_diff = time1 - time2
-        return delta_t - abs(time_diff)
+        time_diff = self.get_delta_t(time1, time2)
+        return self.t_tolerance - abs(time_diff)
 
     def get_CoL(self, individual1: int, individual2: int) -> float:
         """
