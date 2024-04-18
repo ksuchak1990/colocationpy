@@ -27,3 +27,11 @@ class BaseColocation:
 
         if len(missing_cols) > 0:
             raise ValueError(f"Missing required columns: {missing_cols}")
+
+    def __len__(self) -> int:
+        """
+        Method to define the `len` of colocation classes.
+
+        :return: The number of observations in our data.
+        """
+        return len(self.data)
