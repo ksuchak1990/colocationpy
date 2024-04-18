@@ -40,7 +40,7 @@ def run_dx_dt(
     data: pd.DataFrame,
     locations: pd.DataFrame,
     colocation_class: BaseColocation,
-):
+) -> list:
     """
     Run a colocator for a range of $x$- and $t$-tolerances.
 
