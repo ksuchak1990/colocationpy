@@ -12,7 +12,7 @@ import pandas as pd
 import skmob
 from skmob.measures.individual import (distance_straight_line,
                                        radius_of_gyration)
-from skmob.models.epr import DensityEPR
+from skmob.models.epr import DensityEPR, SpatialEPR
 
 # Logging setup
 logging.basicConfig(
@@ -33,7 +33,7 @@ def make_populated_leeds_tessellation(
 
 
 def make_trajectories(
-    start: str, end: str, tess: gpd.GeoDataFrame, pop_size: int
+    start: str, end: str, tess: gpd.GeoDataFrame, pop_size: int, model_type: str
 ) -> skmob.TrajDataFrame:
 
     # Set data collection period
@@ -41,18 +41,30 @@ def make_trajectories(
     end_time = pd.to_datetime(end)
 
     # Set up model
-    depr = DensityEPR()
-
-    # Generate trajectories
-    trajectories = depr.generate(
-        start_time,
-        end_time,
-        tess,
-        relevance_column="Total",
-        n_agents=pop_size,
-        random_state=28,
-        show_progress=True,
-    )
+    logging.info(f"Generating from {model_type} model")
+    if model_type == "density":
+        model = DensityEPR()
+        trajectories = model.generate(
+            start_time,
+            end_time,
+            tess,
+            relevance_column="Total",
+            n_agents=pop_size,
+            random_state=28,
+            show_progress=True,
+        )
+    elif model_type == "spatial":
+        model = SpatialEPR()
+        trajectories = model.generate(
+            start_time,
+            end_time,
+            tess,
+            n_agents=pop_size,
+            random_state=28,
+            show_progress=True,
+        )
+    else:
+        raise ValueError(f"EPR model type not recognised: {model_type}")
 
     return trajectories
 
@@ -65,6 +77,8 @@ if __name__ == "__main__":
     to_read: bool = False
     to_write: bool = True
     to_stats: bool = False
+    # Takes values either "spatial" or "density"
+    epr_type: str = "spatial"
 
     if to_read:
         logging.info("Reading trajectories")
@@ -85,7 +99,9 @@ if __name__ == "__main__":
         START_TIME = "2024/01/01 08:00:00"
         END_TIME = "2024/01/14 08:00:00"
 
-        tdf = make_trajectories(START_TIME, END_TIME, populated_leeds_tessellation, 100)
+        tdf = make_trajectories(
+            START_TIME, END_TIME, populated_leeds_tessellation, 100, epr_type
+        )
 
     if verbose:
         logging.info("Sample of trajectories")
