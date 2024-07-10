@@ -6,6 +6,7 @@ https://www.nature.com/articles/ncomms9166.pdf
 
 # Imports
 import logging
+from argparse import ArgumentParser
 
 import geopandas as gpd
 import pandas as pd
@@ -14,10 +15,17 @@ from skmob.measures.individual import (distance_straight_line,
                                        radius_of_gyration)
 from skmob.models.epr import DensityEPR, SpatialEPR
 
-# Logging setup
+# Basic setup
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s: %(message)s"
 )
+
+parser = ArgumentParser(
+    prog="Trajectory generator", description="Generate trajectories using EPR models"
+)
+parser.add_argument("model_type", type=str, default="spatial")
+parser.add_argument("pop_size", type=int, default=100)
+args = parser.parse_args()
 
 
 # Functions
@@ -78,7 +86,7 @@ if __name__ == "__main__":
     to_write: bool = True
     to_stats: bool = False
     # Takes values either "spatial" or "density"
-    epr_type: str = "spatial"
+    epr_type: str = args.model_type
 
     if to_read:
         logging.info("Reading trajectories")
@@ -92,7 +100,8 @@ if __name__ == "__main__":
                 population, tessellation
             )
         else:
-            populated_leeds_tessellation = gpd.read_file("data/populated_leeds.geojson")
+            populated_leeds_tessellation = gpd.read_file(
+                "data/populated_leeds.geojson")
 
         logging.info("Building trajectories")
         # Set data collection period
@@ -100,7 +109,7 @@ if __name__ == "__main__":
         END_TIME = "2024/01/14 08:00:00"
 
         tdf = make_trajectories(
-            START_TIME, END_TIME, populated_leeds_tessellation, 100, epr_type
+            START_TIME, END_TIME, populated_leeds_tessellation, args.pop_size, epr_type
         )
 
     if verbose:
@@ -109,7 +118,8 @@ if __name__ == "__main__":
 
     if to_write:
         logging.info("Saving trajectories to csv")
-        tdf.to_csv("data/traj.csv", index=False, date_format="%Y-%m-%d %H:%M:%S")
+        tdf.to_csv("data/traj.csv", index=False,
+                   date_format="%Y-%m-%d %H:%M:%S")
 
     if to_vis:
         m = tdf.plot_trajectory()
