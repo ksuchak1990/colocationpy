@@ -14,11 +14,11 @@ import skmob
 from tqdm import tqdm
 
 from colocation.utils import (get_distances, get_time_difference,
-                              is_spatially_proximal, is_temporally_proximal)
+                              get_spatial_proximity, is_temporally_proximal)
 
 # Constants
 T_TOLERANCE = np.timedelta64(4, "h")
-X_TOLERANCE = 0.0
+X_TOLERANCE = 0.01
 
 # Basic setup
 logging.basicConfig(
@@ -65,12 +65,12 @@ for combo in tqdm(combos):
     cross["time_difference"] = get_time_difference(cross)
 
     # Identify points which are near to each other depending on tolerances
-    cross["is_sloc"] = is_spatially_proximal(cross, X_TOLERANCE)
+    cross["is_sloc"] = get_spatial_proximity(cross, X_TOLERANCE, "triangular")
     cross["is_tloc"] = is_temporally_proximal(cross, T_TOLERANCE)
 
     # Define points that are co-located
     cross["is_coloc"] = cross["is_sloc"] * cross["is_tloc"]
-    coloc_instances = cross.loc[cross["is_coloc"] == 1, :]
+    coloc_instances = cross.loc[cross["is_coloc"] > 0.5, :]
 
     # Collate results
     all_observation_combinations.append(coloc_instances)

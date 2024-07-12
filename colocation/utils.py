@@ -98,11 +98,30 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
     return distances
 
 
-def is_spatially_proximal(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
-    __check_required_columns(df, ["distance"])
-
+def get_discrete_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
     nearby = np.where(df["distance"] <= x_tolerance, True, False)
     return pd.Series(nearby)
+
+
+def get_triangular_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
+    proximity = 1 - (df["distance"] / x_tolerance)
+    return proximity
+
+
+def get_spatial_proximity(
+    df: pd.DataFrame, x_tolerance: float, approach: str = "discrete"
+) -> pd.Series:
+    __check_required_columns(df, ["distance"])
+
+    approaches = {
+        "discrete": get_discrete_proximity,
+        "triangular": get_triangular_proximity,
+    }
+
+    assert approach in approaches, f"{approach} is not a valid approach"
+
+    proximity = approaches[approach](df, x_tolerance)
+    return proximity
 
 
 def get_time_difference(df: pd.DataFrame) -> pd.Series:
