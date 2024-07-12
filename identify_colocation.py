@@ -85,8 +85,11 @@ logging.info("Generating combinations")
 individuals = stdf["uid"].unique()
 combos = list(combinations(individuals, 2))
 
-all_observation_combinations = []
 
+# Create dict of subsets of data for each individual
+individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
+
+all_observation_combinations = []
 logging.info("Comparing trajectories")
 for combo in tqdm(combos):
     person1 = stdf.loc[stdf["uid"] == combo[0]]
