@@ -55,17 +55,26 @@ individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in indiv
 all_observation_combinations = []
 logging.info("Comparing trajectories")
 for combo in tqdm(combos):
+    # Get relevant trajectories
     person1 = individual_trajectories[combo[0]]
     person2 = individual_trajectories[combo[1]]
 
+    # Create cross product for comparisons
     cross = person1.merge(person2, how="cross")
+
+    # Calculate spatial and temporal displacements
     cross["distance"] = get_distances(cross)
     cross["time_difference"] = get_time_difference(cross)
+
+    # Identify points which are near to each other depending on tolerances
     cross["is_sloc"] = is_spatially_proximal(cross, X_TOLERANCE)
     cross["is_tloc"] = is_temporally_proximal(cross, T_TOLERANCE)
-    cross["is_coloc"] = cross["is_sloc"] & cross["is_tloc"]
 
+    # Define points that are co-located
+    cross["is_coloc"] = cross["is_sloc"] & cross["is_tloc"]
     coloc_instances = cross.loc[cross["is_coloc"] == 1, :]
+
+    # Collate results
     all_observation_combinations.append(coloc_instances)
 
 logging.info("Collecting results")
