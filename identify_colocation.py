@@ -59,14 +59,6 @@ for combo in tqdm(combos):
     person2 = individual_trajectories[combo[1]]
 
     cross = person1.merge(person2, how="cross")
-    # cross["is_coloc"] = np.where(
-    #     is_spatially_proximal(
-    #         cross["lat_x"], cross["lat_y"], cross["lng_x"], cross["lng_y"]
-    #     )
-    #     & is_temporally_proximal(cross["datetime_x"], cross["datetime_y"]),
-    #     1,
-    #     0,
-    # )
     cross["distance"] = get_distances(cross)
     cross["time_difference"] = get_time_difference(cross)
     cross["is_sloc"] = is_spatially_proximal(cross, X_TOLERANCE)
