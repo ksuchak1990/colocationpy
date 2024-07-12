@@ -31,6 +31,25 @@ parser.add_argument("N", type=int, default=50)
 args = parser.parse_args()
 
 # Functions
+def get_distances(df: pd.DataFrame) -> pd.Series:
+    required_cols = {"lat_x", "lat_y", "lng_x", "lng_y"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    distances = np.sqrt(
+        (cross["lat_x"] - cross["lat_y"]) ** 2 + (cross["lng_x"] - cross["lng_y"]) ** 2
+    )
+
+    return distances
+
+
+def is_spatially_proximal(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
+    required_cols = {"distance"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    nearby = np.where(df["distance"] <= x_tolerance, True, False)
+    return pd.Series(nearby)
 
 
 def is_spatially_proximal(lat1: float, lat2: float, lng1: float, lng2: float) -> bool:
