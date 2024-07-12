@@ -1,3 +1,8 @@
+"""
+Identify instances of co-location between individuals in a set of mobility
+trajectories.
+"""
+
 # Imports
 import logging
 from argparse import ArgumentParser
