@@ -116,5 +116,4 @@ for combo in tqdm(combos):
 logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
-logging.info(
-    f"Number of instances found: {(len(all_observation_combinations))}")
+logging.info(f"Number of instances found: {(len(all_observation_combinations))}")
