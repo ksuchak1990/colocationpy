@@ -92,18 +92,24 @@ individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in indiv
 all_observation_combinations = []
 logging.info("Comparing trajectories")
 for combo in tqdm(combos):
-    person1 = stdf.loc[stdf["uid"] == combo[0]]
-    person2 = stdf.loc[stdf["uid"] == combo[1]]
+    person1 = individual_trajectories[combo[0]]
+    person2 = individual_trajectories[combo[1]]
 
     cross = person1.merge(person2, how="cross")
-    cross["is_coloc"] = np.where(
-        is_spatially_proximal(
-            cross["lat_x"], cross["lat_y"], cross["lng_x"], cross["lng_y"]
-        )
-        & is_temporally_proximal(cross["datetime_x"], cross["datetime_y"]),
-        1,
-        0,
-    )
+    # cross["is_coloc"] = np.where(
+    #     is_spatially_proximal(
+    #         cross["lat_x"], cross["lat_y"], cross["lng_x"], cross["lng_y"]
+    #     )
+    #     & is_temporally_proximal(cross["datetime_x"], cross["datetime_y"]),
+    #     1,
+    #     0,
+    # )
+    cross["distance"] = get_distances(cross)
+    cross["time_difference"] = get_time_difference(cross)
+    cross["is_sloc"] = is_spatially_proximal(cross, X_TOLERANCE)
+    cross["is_tloc"] = is_temporally_proximal(cross, T_TOLERANCE)
+    cross["is_coloc"] = cross["is_sloc"] & cross["is_tloc"]
+
     coloc_instances = cross.loc[cross["is_coloc"] == 1, :]
     all_observation_combinations.append(coloc_instances)
 
