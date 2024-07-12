@@ -3,6 +3,12 @@ Identify instances of co-location between individuals in a set of mobility
 trajectories.
 """
 
+# TO-DO
+# Create projections
+# Flatten combo loop?
+# Introduce altitude to distance measures?
+# Create projections for indoor mobility
+
 # Imports
 import logging
 from argparse import ArgumentParser
