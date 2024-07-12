@@ -69,7 +69,7 @@ for combo in tqdm(combos):
     cross["is_tloc"] = is_temporally_proximal(cross, T_TOLERANCE)
 
     # Define points that are co-located
-    cross["is_coloc"] = cross["is_sloc"] & cross["is_tloc"]
+    cross["is_coloc"] = cross["is_sloc"] * cross["is_tloc"]
     coloc_instances = cross.loc[cross["is_coloc"] == 1, :]
 
     # Collate results
