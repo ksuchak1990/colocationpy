@@ -18,7 +18,7 @@ from colocation.utils import (get_distances, get_time_difference,
 
 # Constants
 T_TOLERANCE = np.timedelta64(4, "h")
-X_TOLERANCE = 0.01
+X_TOLERANCE = 1.0
 
 # Basic setup
 logging.basicConfig(
@@ -70,7 +70,7 @@ for combo in tqdm(combos):
 
     # Define points that are co-located
     cross["is_coloc"] = cross["is_sloc"] * cross["is_tloc"]
-    coloc_instances = cross.loc[cross["is_coloc"] > 0.5, :]
+    coloc_instances = cross.loc[cross["is_coloc"] > 0.8, :]
 
     # Collate results
     all_observation_combinations.append(coloc_instances)

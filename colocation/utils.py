@@ -14,11 +14,34 @@ Numeric = Union[int, float]
 Coordinate: TypeAlias = Tuple[float, float]
 
 
+# Constants
+R = 6378.1370
+
+
 # Functions
 def __check_required_columns(df: pd.DataFrame, rc: List[str]):
     required_cols = set(rc)
     provided_columns = set(df.columns)
     assert required_cols.issubset(provided_columns), "Missing required columns"
+
+
+def __get_haversine_distance(df: pd.DataFrame) -> pd.Series:
+    # Convert lat-lng to radians
+    lng1 = df["lng_x"] * np.pi / 180.0
+    lng2 = df["lng_y"] * np.pi / 180.0
+    lat1 = df["lat_x"] * np.pi / 180.0
+    lat2 = df["lat_y"] * np.pi / 180.0
+
+    # Calculate differences
+    lng_diff = lng2 - lng1
+    lat_diff = lat2 - lat1
+
+    a = (np.sin(lat_diff / 2)) ** 2 + np.cos(lat1) * np.cos(lat2) * (
+        np.sin(lng_diff / 2.0)
+    ) ** 2
+    c = 2.0 * np.atan2(np.sqrt(a), np.sqrt(1.0 - a))
+    km = R * c
+    return km
 
 
 def get_distance(location1: Coordinate, location2: Coordinate) -> float:
@@ -91,9 +114,11 @@ def pivot_outputs(
 def get_distances(df: pd.DataFrame) -> pd.Series:
     __check_required_columns(df, ["lat_x", "lat_y", "lng_x", "lng_y"])
 
-    distances = np.sqrt(
-        (df["lat_x"] - df["lat_y"]) ** 2 + (df["lng_x"] - df["lng_y"]) ** 2
-    )
+    # distances = np.sqrt(
+    #     (df["lat_x"] - df["lat_y"]) ** 2 + (df["lng_x"] - df["lng_y"]) ** 2
+    # )
+
+    distances = __get_haversine_distance(df)
 
     return distances
 
