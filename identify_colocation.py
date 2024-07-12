@@ -52,12 +52,22 @@ def is_spatially_proximal(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
     return pd.Series(nearby)
 
 
-def is_spatially_proximal(lat1: float, lat2: float, lng1: float, lng2: float) -> bool:
-    return (lat1 == lat2) & (lng1 == lng2)
+def get_time_difference(df: pd.DataFrame) -> pd.Series:
+    required_cols = {"datetime_x", "datetime_y"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    time_difference = df["datetime_x"] - df["datetime_y"]
+    return time_difference
 
 
-def is_temporally_proximal(t1: np.timedelta64, t2: np.timedelta64) -> bool:
-    return ((t1 - t_tolerace) <= t2) & (t2 <= (t1 + t_tolerace))
+def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
+    required_cols = {"time_difference"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    nearby = np.where(np.abs(df["time_difference"]) < t_tolerance, True, False)
+    return pd.Series(nearby)
 
 
 # Read data
