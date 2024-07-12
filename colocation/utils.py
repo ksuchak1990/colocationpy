@@ -82,6 +82,45 @@ def pivot_outputs(
     return pivotted
 
 
+def get_distances(df: pd.DataFrame) -> pd.Series:
+    required_cols = {"lat_x", "lat_y", "lng_x", "lng_y"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    distances = np.sqrt(
+        (df["lat_x"] - df["lat_y"]) ** 2 + (df["lng_x"] - df["lng_y"]) ** 2
+    )
+
+    return distances
+
+
+def is_spatially_proximal(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
+    required_cols = {"distance"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    nearby = np.where(df["distance"] <= x_tolerance, True, False)
+    return pd.Series(nearby)
+
+
+def get_time_difference(df: pd.DataFrame) -> pd.Series:
+    required_cols = {"datetime_x", "datetime_y"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    time_difference = df["datetime_x"] - df["datetime_y"]
+    return time_difference
+
+
+def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
+    required_cols = {"time_difference"}
+    provided_columns = set(df.columns)
+    assert required_cols.issubset(provided_columns), "Missing required columns"
+
+    nearby = np.where(np.abs(df["time_difference"]) < t_tolerance, True, False)
+    return pd.Series(nearby)
+
+
 if __name__ == "__main__":
     l1 = (0, 0)
     l2 = (1, 1)
