@@ -39,15 +39,13 @@ tdf = skmob.TrajDataFrame.from_file("data/traj.csv")
 
 # Subset data
 N = args.N
-logging.info(f"Considering {N} individuals")
+logging.info("Considering %s individuals", N)
 stdf = tdf.loc[tdf["uid"] <= N, :]
-
 
 # Iterate over combinations of individuals
 logging.info("Generating combinations")
 individuals = stdf["uid"].unique()
 combos = list(combinations(individuals, 2))
-
 
 # Create dict of subsets of data for each individual
 individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
@@ -80,4 +78,4 @@ for combo in tqdm(combos):
 logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
-logging.info(f"Number of instances found: {(len(all_observation_combinations))}")
+logging.info("Number of instances found: %s", len(all_observation_combinations))
