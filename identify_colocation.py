@@ -14,7 +14,8 @@ import skmob
 from tqdm import tqdm
 
 # Constants
-t_tolerace = np.timedelta64(4, "h")
+T_TOLERANCE = np.timedelta64(4, "h")
+X_TOLERANCE = 0.0
 
 # Basic setup
 logging.basicConfig(
