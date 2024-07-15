@@ -96,8 +96,9 @@ if args.show_locations:
     logging.info("Creating map of co-locations")
 
     # Create base map
+    # c = get_coordinate_centre(all_observation_combinations)
     # m = folium.Map(location=[c.x, c.y], zoom_start=12)
-    m = tdf.plot_trajectory(zoom=12)
+    m = tdf.plot_trajectory(zoom=11, max_users=10, opacity=0.5)
 
     # Create feature groups for each individual
     # Get complete list of ids
@@ -105,6 +106,11 @@ if args.show_locations:
 
     # Create feature groups
     fgs = {i: folium.FeatureGroup(name=i, show=False).add_to(m) for i in ids}
+    # fgs["trajectories"] = folium.FeatureGroup(
+    #     name="trajectories", show=True).add_to(m)
+
+    # Add trajectories
+    # tdf.plot_trajectory(zoom=12).add_to(fgs["trajectories"])
 
     # Add markers
     for i in range(len(all_observation_combinations)):
