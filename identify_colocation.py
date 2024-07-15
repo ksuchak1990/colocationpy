@@ -14,6 +14,7 @@ import logging
 from argparse import ArgumentParser
 from itertools import combinations
 
+import folium
 import numpy as np
 import pandas as pd
 import skmob
@@ -21,6 +22,9 @@ from tqdm import tqdm
 
 from colocation.utils import (get_distances, get_time_difference,
                               get_spatial_proximity, is_temporally_proximal)
+from colocation.utils import (get_all_ids, get_distances,
+                              get_spatial_proximity, get_time_difference,
+                              is_temporally_proximal)
 
 # Constants
 T_TOLERANCE = np.timedelta64(4, "h")
@@ -37,6 +41,7 @@ parser = ArgumentParser(
     prog="Co-location identification", description="Identify instances of co-location"
 )
 parser.add_argument("N", type=int, default=50)
+parser.add_argument("show_locations", type=bool, default=False)
 args = parser.parse_args()
 
 # Read data
@@ -85,3 +90,29 @@ logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
 logging.info("Number of instances found: %s", len(all_observation_combinations))
+if args.show_locations:
+    logging.info("Creating map of co-locations")
+
+    # Create base map
+    # m = folium.Map(location=[c.x, c.y], zoom_start=12)
+    m = tdf.plot_trajectory(zoom=12)
+
+    # Create feature groups for each individual
+    # Get complete list of ids
+    ids = get_all_ids(all_observation_combinations)
+
+    # Create feature groups
+    fgs = {i: folium.FeatureGroup(name=i, show=False).add_to(m) for i in ids}
+
+    # Add markers
+    for i in range(len(all_observation_combinations)):
+        record = all_observation_combinations.iloc[i]
+        folium.Marker(
+            location=[record["lat_y"], record["lng_y"]], popup=record["uid_y"]
+        ).add_to(fgs[record["uid_y"]])
+        folium.Marker(
+            location=[record["lat_x"], record["lng_x"]], popup=record["uid_x"]
+        ).add_to(fgs[record["uid_x"]])
+
+    folium.LayerControl().add_to(m)
+    m.save("figures/colocations.html")

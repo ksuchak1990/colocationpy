@@ -163,6 +163,14 @@ def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
     return pd.Series(nearby)
 
 
+def get_all_ids(colocation_points: pd.DataFrame) -> list:
+    ids_x = colocation_points["uid_x"].unique()
+    ids_y = colocation_points["uid_y"].unique()
+    ids = list(set(ids_x) | set(ids_y))
+    ids = [int(x) for x in ids]
+    return ids
+
+
 if __name__ == "__main__":
     l1 = (0, 0)
     l2 = (1, 1)
