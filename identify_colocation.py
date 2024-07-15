@@ -20,9 +20,9 @@ import pandas as pd
 import skmob
 from tqdm import tqdm
 
-from colocation.utils import (get_all_ids, get_distances,
-                              get_spatial_proximity, get_time_difference,
-                              is_temporally_proximal)
+from colocation.utils import (get_all_ids, get_coordinate_centre,
+                              get_distances, get_spatial_proximity,
+                              get_time_difference, is_temporally_proximal)
 
 # Constants
 T_TOLERANCE = np.timedelta64(2, "h")

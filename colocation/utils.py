@@ -6,6 +6,7 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
+from shapely.geometry import MultiPoint, Point
 
 from colocation.base_colocation import BaseColocation
 
@@ -165,6 +166,19 @@ def get_all_ids(colocation_points: pd.DataFrame) -> list:
     ids = list(set(ids_x) | set(ids_y))
     ids = [int(x) for x in ids]
     return ids
+
+
+def get_coordinate_centre(colocation_points: pd.DataFrame) -> Point:
+    people_x = pd.DataFrame(
+        {"lat": colocation_points["lat_x"], "lng": colocation_points["lng_x"]}
+    )
+    people_y = pd.DataFrame(
+        {"lat": colocation_points["lat_y"], "lng": colocation_points["lng_y"]}
+    )
+    people = pd.concat([people_x, people_y])
+    points = [tuple(r) for r in people.to_numpy()]
+    points = MultiPoint(points)
+    return points.centroid
 
 
 if __name__ == "__main__":
