@@ -5,9 +5,9 @@ trajectories.
 
 # TO-DO
 # Create projections
+# Create projections for indoor mobility
 # Flatten combo loop?
 # Introduce altitude to distance measures?
-# Create projections for indoor mobility
 
 # Imports
 import logging
@@ -20,14 +20,12 @@ import pandas as pd
 import skmob
 from tqdm import tqdm
 
-from colocation.utils import (get_distances, get_time_difference,
-                              get_spatial_proximity, is_temporally_proximal)
 from colocation.utils import (get_all_ids, get_distances,
                               get_spatial_proximity, get_time_difference,
                               is_temporally_proximal)
 
 # Constants
-T_TOLERANCE = np.timedelta64(4, "h")
+T_TOLERANCE = np.timedelta64(2, "h")
 X_TOLERANCE = 1.0
 
 # Basic setup
@@ -59,11 +57,13 @@ individuals = stdf["uid"].unique()
 combos = list(combinations(individuals, 2))
 
 # Create dict of subsets of data for each individual
-individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
+individual_trajectories = {
+    uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
 
+logging.info("Identifying co-locations within (%s km, %s)",
+             X_TOLERANCE, T_TOLERANCE)
 all_observation_combinations = []
-logging.info("Comparing trajectories")
-for combo in tqdm(combos):
+for combo in tqdm(combos, desc="Comparing trajectories"):
     # Get relevant trajectories
     person1 = individual_trajectories[combo[0]]
     person2 = individual_trajectories[combo[1]]
@@ -89,7 +89,9 @@ for combo in tqdm(combos):
 logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
-logging.info("Number of instances found: %s", len(all_observation_combinations))
+logging.info("Number of instances found: %s",
+             len(all_observation_combinations))
+
 if args.show_locations:
     logging.info("Creating map of co-locations")
 

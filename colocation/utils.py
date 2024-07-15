@@ -114,10 +114,6 @@ def pivot_outputs(
 def get_distances(df: pd.DataFrame) -> pd.Series:
     __check_required_columns(df, ["lat_x", "lat_y", "lng_x", "lng_y"])
 
-    # distances = np.sqrt(
-    #     (df["lat_x"] - df["lat_y"]) ** 2 + (df["lng_x"] - df["lng_y"]) ** 2
-    # )
-
     distances = __get_haversine_distance(df)
 
     return distances
