@@ -27,6 +27,7 @@ from colocation.utils import (get_all_ids, get_coordinate_centre,
 # Constants
 T_TOLERANCE = np.timedelta64(2, "h")
 X_TOLERANCE = 1.0
+show_traj = False
 
 # Basic setup
 logging.basicConfig(
@@ -96,9 +97,11 @@ if args.show_locations:
     logging.info("Creating map of co-locations")
 
     # Create base map
-    # c = get_coordinate_centre(all_observation_combinations)
-    # m = folium.Map(location=[c.x, c.y], zoom_start=12)
-    m = tdf.plot_trajectory(zoom=11, max_users=10, opacity=0.5)
+    if show_traj:
+        m = tdf.plot_trajectory(zoom=11, max_users=10, opacity=0.5)
+    else:
+        c = get_coordinate_centre(all_observation_combinations)
+        m = folium.Map(location=[c.x, c.y], zoom_start=11)
 
     # Create feature groups for each individual
     # Get complete list of ids
