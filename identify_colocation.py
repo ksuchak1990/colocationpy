@@ -49,7 +49,8 @@ tdf = skmob.TrajDataFrame.from_file("data/traj.csv")
 
 # Subset data
 N = args.N
-logging.info("Considering %s individuals", N)
+pop_size = tdf["uid"].unique().shape[0]
+logging.info("Considering %s individuals (%s%%)", N, (N / pop_size) * 100)
 stdf = tdf.loc[tdf["uid"] <= N, :]
 
 # Iterate over combinations of individuals
