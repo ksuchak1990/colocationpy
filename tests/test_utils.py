@@ -13,8 +13,7 @@ from colocation.utils import (
 
 diagonal_barrier = Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)])
 vertical_barrier = Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)])
-corner_barrier = Polygon(
-    [(0, 4), (0, 5), (5, 5), (5, 0), (4, 0), (4, 4), (0, 4)])
+corner_barrier = Polygon([(0, 4), (0, 5), (5, 5), (5, 0), (4, 0), (4, 4), (0, 4)])
 
 # Define test data
 barrier_divide_data = [

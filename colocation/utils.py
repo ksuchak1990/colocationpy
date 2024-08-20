@@ -132,15 +132,45 @@ def get_distance_around_barrier(location1, location2, barrier) -> float:
     location1 = Point(location1)
     location2 = Point(location2)
 
-    # Get nearest point on barrier polygon for each location
-    nearest_barrier_point1 = get_closest_corner(location1, barrier)
-    nearest_barrier_point2 = get_closest_corner(location2, barrier)
+    # Find the closest points on the barrier to p1 and p2
+    closest_point_to_p1 = barrier.exterior.interpolate(
+        barrier.exterior.project(location1)
+    )
+    closest_point_to_p2 = barrier.exterior.interpolate(
+        barrier.exterior.project(location2)
+    )
 
-    d1 = distance(location1, nearest_barrier_point1)
-    d2 = distance(nearest_barrier_point1, nearest_barrier_point2)
-    d3 = distance(location2, nearest_barrier_point2)
+    # Find the closest vertex indices to these points
+    boundary_coords = list(barrier.exterior.coords)
+    idx1 = min(
+        range(len(boundary_coords)),
+        key=lambda i: Point(boundary_coords[i]).distance(closest_point_to_p1),
+    )
+    idx2 = min(
+        range(len(boundary_coords)),
+        key=lambda i: Point(boundary_coords[i]).distance(closest_point_to_p2),
+    )
 
-    return d1 + d2 + d3
+    # Calculate the distance around the barrier in both directions
+    if idx1 < idx2:
+        segment_1 = LineString(boundary_coords[idx1 : idx2 + 1])
+        segment_2 = LineString(boundary_coords[idx2:] + boundary_coords[: idx1 + 1])
+    else:
+        segment_1 = LineString(boundary_coords[idx2 : idx1 + 1])
+        segment_2 = LineString(boundary_coords[idx1:] + boundary_coords[: idx2 + 1])
+
+    path_1_distance = (
+        location1.distance(Point(boundary_coords[idx1]))
+        + segment_1.length
+        + Point(boundary_coords[idx2]).distance(location2)
+    )
+    path_2_distance = (
+        location2.distance(Point(boundary_coords[idx1]))
+        + segment_2.length
+        + Point(boundary_coords[idx2]).distance(location2)
+    )
+
+    return min(path_1_distance, path_2_distance)
 
 
 def get_closest_corner(location, barrier) -> Point:
