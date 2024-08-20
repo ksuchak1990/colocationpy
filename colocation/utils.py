@@ -129,9 +129,19 @@ def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
 
 
 def get_distance_around_barrier(location1, location2, barrier) -> float:
+    location1 = Point(location1)
+    location2 = Point(location2)
+
     # Get nearest point on barrier polygon for each location
-    nearest1 = nearest_points(barrier, location1)
-    nearest2 = nearest_points(barrier, location2)
+    nearest_barrier_point1 = get_closest_corner(location1, barrier)
+    nearest_barrier_point2 = get_closest_corner(location2, barrier)
+
+    d1 = distance(location1, nearest_barrier_point1)
+    d2 = distance(nearest_barrier_point1, nearest_barrier_point2)
+    d3 = distance(location2, nearest_barrier_point2)
+
+    return d1 + d2 + d3
+
 
 def get_closest_corner(location, barrier) -> Point:
     points = barrier.exterior.coords
