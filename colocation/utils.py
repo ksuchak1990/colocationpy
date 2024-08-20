@@ -134,8 +134,6 @@ def get_distance_around_barrier(location1, location2, barrier) -> float:
     nearest2 = nearest_points(barrier, location2)
 
 
-
-
 def get_discrete_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
     nearby = np.where(df["distance"] <= x_tolerance, True, False)
     return pd.Series(nearby)

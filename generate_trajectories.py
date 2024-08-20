@@ -11,8 +11,7 @@ from argparse import ArgumentParser
 import geopandas as gpd
 import pandas as pd
 import skmob
-from skmob.measures.individual import (distance_straight_line,
-                                       radius_of_gyration)
+from skmob.measures.individual import distance_straight_line, radius_of_gyration
 from skmob.models.epr import DensityEPR, SpatialEPR
 
 # Basic setup
@@ -100,8 +99,7 @@ if __name__ == "__main__":
                 population, tessellation
             )
         else:
-            populated_leeds_tessellation = gpd.read_file(
-                "data/populated_leeds.geojson")
+            populated_leeds_tessellation = gpd.read_file("data/populated_leeds.geojson")
 
         logging.info("Building trajectories")
         # Set data collection period
@@ -118,8 +116,7 @@ if __name__ == "__main__":
 
     if to_write:
         logging.info("Saving trajectories to csv")
-        tdf.to_csv("data/traj.csv", index=False,
-                   date_format="%Y-%m-%d %H:%M:%S")
+        tdf.to_csv("data/traj.csv", index=False, date_format="%Y-%m-%d %H:%M:%S")
 
     if to_vis:
         m = tdf.plot_trajectory()

@@ -22,7 +22,7 @@ class ModifiedWangColocation(WangColocation):
         population_data: pd.DataFrame,
         location_data: pd.DataFrame,
         x_tolerance: float,
-        t_tolerance: float
+        t_tolerance: float,
     ) -> None:
         super().__init__(population_data, location_data)
         self.x_tolerance = x_tolerance

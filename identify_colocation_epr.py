@@ -20,9 +20,14 @@ import pandas as pd
 import skmob
 from tqdm import tqdm
 
-from colocation.utils import (get_all_ids, get_coordinate_centre,
-                              get_distances, get_spatial_proximity,
-                              get_time_difference, is_temporally_proximal)
+from colocation.utils import (
+    get_all_ids,
+    get_coordinate_centre,
+    get_distances,
+    get_spatial_proximity,
+    get_time_difference,
+    is_temporally_proximal,
+)
 
 # Constants
 T_TOLERANCE = np.timedelta64(2, "h")
@@ -37,8 +42,7 @@ logging.basicConfig(
 )
 
 parser = ArgumentParser(
-    prog="Co-location identification",
-    description="Identify instances of co-location"
+    prog="Co-location identification", description="Identify instances of co-location"
 )
 parser.add_argument("N", type=int, default=50)
 parser.add_argument("show_locations", type=bool, default=False)
@@ -60,11 +64,9 @@ individuals = stdf["uid"].unique()
 combos = list(combinations(individuals, 2))
 
 # Create dict of subsets of data for each individual
-individual_trajectories = {
-    uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
+individual_trajectories = {uid: stdf.loc[stdf["uid"] == uid, :] for uid in individuals}
 
-logging.info("Identifying co-locations within (%s km, %s)",
-             X_TOLERANCE, T_TOLERANCE)
+logging.info("Identifying co-locations within (%s km, %s)", X_TOLERANCE, T_TOLERANCE)
 all_observation_combinations = []
 for combo in tqdm(combos, desc="Comparing trajectories"):
     # Get relevant trajectories
@@ -92,8 +94,7 @@ for combo in tqdm(combos, desc="Comparing trajectories"):
 logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
-logging.info("Number of instances found: %s",
-             len(all_observation_combinations))
+logging.info("Number of instances found: %s", len(all_observation_combinations))
 
 if args.show_locations:
     logging.info("Creating map of co-locations")
