@@ -6,8 +6,8 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
-from shapely import intersects
-from shapely.geometry import LineString, MultiPoint, Point
+from shapely import intersects, distance
+from shapely.geometry import LineString, MultiPoint, Point, mapping
 from shapely.ops import nearest_points
 
 from colocation.base_colocation import BaseColocation
@@ -132,6 +132,12 @@ def get_distance_around_barrier(location1, location2, barrier) -> float:
     # Get nearest point on barrier polygon for each location
     nearest1 = nearest_points(barrier, location1)
     nearest2 = nearest_points(barrier, location2)
+
+def get_closest_corner(location, barrier) -> Point:
+    points = barrier.exterior.coords
+    location = Point(location)
+    corner = min(points, key=lambda corner: location.distance(Point(corner)))
+    return Point(corner)
 
 
 def get_discrete_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:

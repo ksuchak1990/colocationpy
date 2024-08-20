@@ -2,9 +2,14 @@
 Test functions in `colocation.utils`
 """
 
-from shapely.geometry import Polygon, LineString
-from colocation.utils import is_divided_by_barrier
+# Imports
 import pytest
+from shapely.geometry import Polygon, LineString, Point
+from colocation.utils import (
+    is_divided_by_barrier,
+    get_distance_around_barrier,
+    get_closest_corner,
+)
 
 
 barrier_divide_data = [
@@ -21,8 +26,17 @@ barrier_divide_data = [
     ),
 ]
 
+corner_data = [
+    ((0, 5), Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)]), Point((4, 2)))
+]
 
 @pytest.mark.parametrize("location1, location2, barrier, expected", barrier_divide_data)
 def test_divided_by_barrier(location1, location2, barrier, expected):
     result = is_divided_by_barrier(location1, location2, barrier)
+    assert result == expected
+
+
+@pytest.mark.parametrize("location, barrier, expected", corner_data)
+def test_closest_corner(location, barrier, expected):
+    result = get_closest_corner(location, barrier)
     assert result == expected
