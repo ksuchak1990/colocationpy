@@ -6,7 +6,9 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
-from shapely.geometry import MultiPoint, Point
+from shapely import intersects
+from shapely.geometry import LineString, MultiPoint, Point
+from shapely.ops import nearest_points
 
 from colocation.base_colocation import BaseColocation
 
@@ -118,6 +120,20 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
     distances = __get_haversine_distance(df)
 
     return distances
+
+
+def __is_divided_by_barried(location1, location2, wall_geometry) -> bool:
+    connecting_line = LineString([Point(location1), Point(location2)])
+
+    return intersects(connecting_line, wall_geometry)
+
+
+def get_distance_around_barrier(location1, location2, barrier) -> float:
+    # Get nearest point on barrier polygon for each location
+    nearest1 = nearest_points(barrier, location1)
+    nearest2 = nearest_points(barrier, location2)
+
+
 
 
 def get_discrete_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
