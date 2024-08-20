@@ -27,7 +27,7 @@ from colocation.utils import (get_all_ids, get_coordinate_centre,
 # Constants
 T_TOLERANCE = np.timedelta64(2, "h")
 X_TOLERANCE = 1.0
-show_traj = False
+SHOW_TRAJ = False
 
 # Basic setup
 logging.basicConfig(
@@ -37,7 +37,8 @@ logging.basicConfig(
 )
 
 parser = ArgumentParser(
-    prog="Co-location identification", description="Identify instances of co-location"
+    prog="Co-location identification",
+    description="Identify instances of co-location"
 )
 parser.add_argument("N", type=int, default=50)
 parser.add_argument("show_locations", type=bool, default=False)
@@ -98,7 +99,7 @@ if args.show_locations:
     logging.info("Creating map of co-locations")
 
     # Create base map
-    if show_traj:
+    if SHOW_TRAJ:
         m = tdf.plot_trajectory(zoom=11, max_users=10, opacity=0.5)
     else:
         c = get_coordinate_centre(all_observation_combinations)
