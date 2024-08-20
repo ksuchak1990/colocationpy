@@ -122,7 +122,7 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
     return distances
 
 
-def __is_divided_by_barried(location1, location2, wall_geometry) -> bool:
+def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
     connecting_line = LineString([Point(location1), Point(location2)])
 
     return intersects(connecting_line, wall_geometry)
