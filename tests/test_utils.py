@@ -11,28 +11,30 @@ from colocation.utils import (
     get_closest_corner,
 )
 
+diagonal_barrier = Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)])
+vertical_barrier = Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)])
+corner_barrier = Polygon(
+    [(0, 4), (0, 5), (5, 5), (5, 0), (4, 0), (4, 4), (0, 4)])
 
 # Define test data
 barrier_divide_data = [
     ((0, 0), (1, 1), LineString([(1, 0), (0, 1)]), True),
     ((0, 0), (1, 1), LineString([(1, 0), (2, 1)]), False),
-    ((0, 0), (10, 10), Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)]), True),
-    ((0, 10), (10, 0), Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)]), True),
-    ((0, 0), (3, 3), Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)]), False),
+    ((0, 0), (10, 10), diagonal_barrier, True),
+    ((0, 10), (10, 0), diagonal_barrier, True),
+    ((0, 0), (3, 3), diagonal_barrier, False),
     (
         (0, 0),
         (10, 10),
-        Polygon([(0, 4), (0, 5), (5, 5), (5, 0), (4, 0), (4, 4), (0, 4)]),
+        corner_barrier,
         True,
     ),
 ]
 
-corner_data = [
-    ((0, 5), Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)]), Point((4, 2)))
-]
+corner_data = [((0, 5), vertical_barrier, Point((4, 2)))]
 
 barrier_distance_data = [
-    ((0, 5), (9, 5), Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)]), 11),
+    ((0, 5), (9, 5), vertical_barrier, 11),
     ((0, 5), (10, 5), Polygon([(4, 2), (6, 2), (6, 9), (4, 9), (4, 2)]), 12),
 ]
 
