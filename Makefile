@@ -16,3 +16,6 @@ black:
 
 test:
 	pytest
+
+test-cov:
+	pytest --cov=colocation
