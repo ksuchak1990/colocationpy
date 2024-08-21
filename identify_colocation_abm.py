@@ -59,6 +59,8 @@ local_crs = pyproj.CRS.from_proj4(
 logging.info("Reading data")
 df = pd.read_csv("data/agent_traj_CINCHserverparams_sq_20240619_1_1723552143.csv")
 
+# 10 distance units in model equivalent to 1 metre
+
 df["x"] = df["x"] / 10
 df["y"] = df["y"] / 10
 
