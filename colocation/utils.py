@@ -23,12 +23,38 @@ R = 6378.1370
 
 # Functions
 def __check_required_columns(df: pd.DataFrame, rc: List[str]):
+    """
+    Ensure that a dataframe has a collection of required columns.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe to be checked.
+    rc : List[str]
+        List of column names required in dataframe.
+
+    """
     required_cols = set(rc)
     provided_columns = set(df.columns)
     assert required_cols.issubset(provided_columns), "Missing required columns"
 
 
 def __get_haversine_distance(df: pd.DataFrame) -> pd.Series:
+    """
+    Calculate the haversine distance between coordinate observations.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Collection of pairs of coordinates for comparison for co-location.
+
+
+    Returns
+    -------
+    pd.Series
+        Series of distances.
+
+    """
     # Convert lat-lng to radians
     lng1 = df["lng_x"] * np.pi / 180.0
     lng2 = df["lng_y"] * np.pi / 180.0
@@ -115,6 +141,22 @@ def pivot_outputs(
 
 
 def get_distances(df: pd.DataFrame) -> pd.Series:
+    """
+    Generate a series of distance measurements between individuals x and y,
+    described by coordinates (lat_x, lng_x) and (lat_y, lng_y) respectively.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A dataframe containing the pairs of coordinates to be compared.
+
+    Returns
+    -------
+    pd.Series
+        A series of distance measurements generated using a haversine distance
+        calculation.
+
+    """
     __check_required_columns(df, ["lat_x", "lat_y", "lng_x", "lng_y"])
 
     distances = __get_haversine_distance(df)
@@ -123,6 +165,24 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
 
 
 def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
+    """
+    Check if two locations are divided by a barrier.
+
+    Parameters
+    ----------
+    location1 : Coordinate
+        First location to be considered.
+    location2 : Coordinate
+        Second location to be considered.
+    wall_geometry : Barrier
+        Barrier geometry that may be between the two locations.
+
+    Returns
+    -------
+    bool
+        Indication of whether the given barrier divides the two locations.
+
+    """
     connecting_line = LineString([Point(location1), Point(location2)])
 
     return intersects(connecting_line, wall_geometry)
@@ -147,6 +207,24 @@ def get_opposing_line_segments(boundaries, idx1, idx2):
 
 
 def get_distance_around_barrier(location1, location2, barrier) -> float:
+    """
+    Calculate the distance between two locations, given a barrier between them.
+
+    Parameters
+    ----------
+    location1 : Coordinate
+        First location to consider.
+    location2 : Coordinate
+        Second location to consider.
+    barrier : Barrier
+        Barrier geometry between two locations.
+
+    Returns
+    -------
+    float
+        Shortest distance from one location to the other around the barrier.
+
+    """
     location1 = Point(location1)
     location2 = Point(location2)
 
@@ -213,6 +291,20 @@ def get_spatial_proximity(
 
 
 def get_time_difference(df: pd.DataFrame) -> pd.Series:
+    """
+    Calculate time difference between two different observations.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Collection of pairs of coordinates for comparison for co-location.
+
+    Returns
+    -------
+    pd.Series
+        Collection of time differences.
+
+    """
     __check_required_columns(df, ["datetime_x", "datetime_y"])
 
     time_difference = df["datetime_x"] - df["datetime_y"]
@@ -220,6 +312,24 @@ def get_time_difference(df: pd.DataFrame) -> pd.Series:
 
 
 def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
+    """
+    Check if a pair of observations are temporally proximal, i.e. whether the
+    time difference between the observations is less than a given tolerance.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Collection of pairs of coordinates for comparison for co-location.
+    t_tolerance : float
+        The permissible length of time between observations.
+
+    Returns
+    -------
+    pd.Series
+        Series of booleans indicating whether observations are within the given
+        tolerance.
+
+    """
     __check_required_columns(df, ["time_difference"])
 
     nearby = np.where(np.abs(df["time_difference"]) < t_tolerance, True, False)
@@ -227,6 +337,20 @@ def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
 
 
 def get_all_ids(colocation_points: pd.DataFrame) -> list:
+    """
+    Get list of IDs of individuals in a population.
+
+    Parameters
+    ----------
+    colocation_points : pd.DataFrame
+        Collection of pairs of coordinates for comparison for co-location.
+
+    Returns
+    -------
+    list
+        List of unique IDs.
+
+    """
     ids_x = colocation_points["uid_x"].unique()
     ids_y = colocation_points["uid_y"].unique()
     ids = list(set(ids_x) | set(ids_y))
@@ -235,6 +359,20 @@ def get_all_ids(colocation_points: pd.DataFrame) -> list:
 
 
 def get_coordinate_centre(colocation_points: pd.DataFrame) -> Point:
+    """
+    Identify geographical centre of coordinate pairs.
+
+    Parameters
+    ----------
+    colocation_points : pd.DataFrame
+        Collection of pairs of coordinates for comparison for co-location.
+
+    Returns
+    -------
+    Point
+        The centroid of the coordinates.
+
+    """
     people_x = pd.DataFrame(
         {"lat": colocation_points["lat_x"], "lng": colocation_points["lng_x"]}
     )
