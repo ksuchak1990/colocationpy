@@ -7,7 +7,7 @@ from typing import List, Tuple, TypeAlias, Union
 import numpy as np
 import pandas as pd
 from shapely import intersects, distance
-from shapely.geometry import LineString, MultiPoint, Point, mapping
+from shapely.geometry import LineString, MultiPoint, Point, mapping, Polygon
 from shapely.ops import nearest_points
 
 from colocation.base_colocation import BaseColocation
@@ -15,6 +15,7 @@ from colocation.base_colocation import BaseColocation
 # Define types
 Numeric = Union[int, float]
 Coordinate: TypeAlias = Tuple[float, float]
+Barrier = Union[LineString, Polygon]
 
 
 # Constants
@@ -164,7 +165,9 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
     return distances
 
 
-def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
+def is_divided_by_barrier(
+    location1: Coordinate, location2: Coordinate, wall_geometry: Barrier
+) -> bool:
     """
     Check if two locations are divided by a barrier.
 
@@ -188,7 +191,7 @@ def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
     return intersects(connecting_line, wall_geometry)
 
 
-def get_closest_point(location, barrier):
+def get_closest_point(location: Coordinate, barrier: Barrier):
     return barrier.exterior.interpolate(barrier.exterior.project(location))
 
 
@@ -206,7 +209,18 @@ def get_opposing_line_segments(boundaries, idx1, idx2):
     return segment_1, segment_2
 
 
-def get_distance_around_barrier(location1, location2, barrier) -> float:
+def get_indoor_distance(
+    location1: Coordinate, location2: Coordinate, barrier: Barrier
+) -> float:
+    if is_divided_by_barrier(location1, location2, barrier):
+        return get_distance_around_barrier(location1, location2, barrier)
+
+    return get_distance(location1, location2)
+
+
+def get_distance_around_barrier(
+    location1: Coordinate, location2: Coordinate, barrier: Barrier
+) -> float:
     """
     Calculate the distance between two locations, given a barrier between them.
 
