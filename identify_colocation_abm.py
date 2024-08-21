@@ -57,8 +57,7 @@ local_crs = pyproj.CRS.from_proj4(
 
 # Read data
 logging.info("Reading data")
-df = pd.read_csv(
-    "data/agent_traj_CINCHserverparams_sq_20240619_1_1723552143.csv")
+df = pd.read_csv("data/agent_traj_CINCHserverparams_sq_20240619_1_1723552143.csv")
 
 df["x"] = df["x"] / 10
 df["y"] = df["y"] / 10
@@ -87,4 +86,3 @@ tdf = tdf.loc[tdf["status"] == "active", :]
 
 m = tdf.plot_trajectory()
 m.save("figures/colocation_abm.html")
-
