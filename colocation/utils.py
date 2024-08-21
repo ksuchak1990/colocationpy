@@ -128,36 +128,42 @@ def is_divided_by_barrier(location1, location2, wall_geometry) -> bool:
     return intersects(connecting_line, wall_geometry)
 
 
+def get_closest_point(location, barrier):
+    return barrier.exterior.interpolate(barrier.exterior.project(location))
+
+
+def get_closest_vertex_index(boundaries, point):
+    idx = min(
+        range(len(boundaries)),
+        key=lambda i: Point(boundaries[i]).distance(point),
+    )
+    return idx
+
+
+def get_opposing_line_segments(boundaries, idx1, idx2):
+    segment_1 = LineString(boundaries[idx1 : idx2 + 1])
+    segment_2 = LineString(boundaries[idx2:] + boundaries[: idx1 + 1])
+    return segment_1, segment_2
+
+
 def get_distance_around_barrier(location1, location2, barrier) -> float:
     location1 = Point(location1)
     location2 = Point(location2)
 
     # Find the closest points on the barrier to p1 and p2
-    closest_point_to_p1 = barrier.exterior.interpolate(
-        barrier.exterior.project(location1)
-    )
-    closest_point_to_p2 = barrier.exterior.interpolate(
-        barrier.exterior.project(location2)
-    )
+    closest_point_to_p1 = get_closest_point(location1, barrier)
+    closest_point_to_p2 = get_closest_point(location2, barrier)
 
     # Find the closest vertex indices to these points
     boundary_coords = list(barrier.exterior.coords)
-    idx1 = min(
-        range(len(boundary_coords)),
-        key=lambda i: Point(boundary_coords[i]).distance(closest_point_to_p1),
-    )
-    idx2 = min(
-        range(len(boundary_coords)),
-        key=lambda i: Point(boundary_coords[i]).distance(closest_point_to_p2),
-    )
+    idx1 = get_closest_vertex_index(boundary_coords, closest_point_to_p1)
+    idx2 = get_closest_vertex_index(boundary_coords, closest_point_to_p2)
 
     # Calculate the distance around the barrier in both directions
     if idx1 < idx2:
-        segment_1 = LineString(boundary_coords[idx1 : idx2 + 1])
-        segment_2 = LineString(boundary_coords[idx2:] + boundary_coords[: idx1 + 1])
+        segment_1, segment_2 = get_opposing_line_segments(boundary_coords, idx1, idx2)
     else:
-        segment_1 = LineString(boundary_coords[idx2 : idx1 + 1])
-        segment_2 = LineString(boundary_coords[idx1:] + boundary_coords[: idx2 + 1])
+        segment_1, segment_2 = get_opposing_line_segments(boundary_coords, idx2, idx1)
 
     path_1_distance = (
         location1.distance(Point(boundary_coords[idx1]))
