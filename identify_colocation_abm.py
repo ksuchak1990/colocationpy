@@ -61,6 +61,7 @@ df = pd.read_csv("data/agent_traj_CINCHserverparams_sq_20240619_1_1723552143.csv
 
 # 10 distance units in model equivalent to 1 metre
 
+logging.info("Creating GeoDataFrame")
 df["x"] = df["x"] / 10
 df["y"] = df["y"] / 10
 
@@ -70,9 +71,7 @@ gdf = gdf.to_crs(epsg=4326)
 gdf["latitude"] = gdf.geometry.y
 gdf["longitude"] = gdf.geometry.x
 
-logging.info(gdf.head())
-
-
+logging.info("Creating TrajDataFrame")
 tdf = skmob.TrajDataFrame(
     gdf,
     latitude="latitude",
@@ -82,9 +81,13 @@ tdf = skmob.TrajDataFrame(
     crs=local_crs.to_dict(),
 )
 
-logging.info(tdf.head())
-
+logging.info("Select active agent data")
 tdf = tdf.loc[tdf["status"] == "active", :]
 
-m = tdf.plot_trajectory()
+logging.info("Saving trajectory plot")
+m = tdf.plot_trajectory(max_users=5, max_points=None)
 m.save("figures/colocation_abm.html")
+
+first_step = tdf["datetime"].min()
+first_step_agents = tdf.loc[tdf["datetime"] == first_step, :]
+logging.info("Number of agents active in first step: %s", len(first_step_agents))
