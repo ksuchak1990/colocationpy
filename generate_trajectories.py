@@ -31,6 +31,22 @@ args = parser.parse_args()
 def make_populated_leeds_tessellation(
     pop: pd.DataFrame, tess: gpd.GeoDataFrame
 ) -> gpd.GeoDataFrame:
+    """
+    Create a tessellation of LSOAs of Leeds with populations attached to them.
+
+    Parameters
+    ----------
+    pop : pd.DataFrame
+        Dataframe of populations attached to each LSOA.
+    tess : gpd.GeoDataFrame
+        GeoDataframe of LSOA polygons.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        GeoDataframe of LSOA polygons with populations attached to each one.
+
+    """
     # Filter tessellation down to Leeds
     leeds_tessellation = tess.loc[tess["LSOA21NM"].str.contains("Leeds"), :]
     populated_leeds_tessellation = leeds_tessellation.merge(
@@ -43,6 +59,29 @@ def make_trajectories(
     start: str, end: str, tess: gpd.GeoDataFrame, pop_size: int, model_type: str
 ) -> skmob.TrajDataFrame:
 
+    """
+    Generate a collection of trajectories for a population of agents.
+
+    Parameters
+    ----------
+    start : str
+        Start datetime provided as a string.
+    end : str
+        End datetime provided as a string.
+    tess : gpd.GeoDataFrame
+        Tessellation across which the agents will travel, provided as a GeoDataFrame.
+    pop_size : int
+        Number of agents in the population.
+    model_type : str
+        Type of EPR model to be used - either density or spatial - indicated by
+        a string.
+
+    Returns
+    -------
+    skmob.TrajDataFrame
+        A TrajDataFrame of trajectories for the population.
+
+    """
     # Set data collection period
     start_time = pd.to_datetime(start)
     end_time = pd.to_datetime(end)
