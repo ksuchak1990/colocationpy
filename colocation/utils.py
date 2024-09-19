@@ -399,6 +399,49 @@ def get_coordinate_centre(colocation_points: pd.DataFrame) -> Point:
     return points.centroid
 
 
+def get_mahalanobis_distance(
+    location1: Coordinate,
+    location2: Coordinate,
+    x_uncertainty1: float,
+    x_uncertainty2: float,
+    y_uncertainty1: float,
+    y_uncertainty2: float,
+) -> float:
+    """
+    Calculate the Mahalanobis distance between two coordinate locations which
+    are observed with some degree of uncertainty around them. This works on the
+    assumption that uncertainty around the observation is normally distributed,
+    with the provided locations representing the means of the two 2-d gaussian
+    distributions. Furthermore, we assume that the uncertainty is uncorrelated,
+    i.e. there is no x-y correlation, resulting in covariance matrices that are
+    diagonal.
+
+    Parameters
+    ----------
+    location1 : Coordinate
+        (x, y) location of the first observation.
+    location2 : Coordinate
+        (x, y) location of the second observation.
+    x_uncertainty1 : float
+        x-uncertainty of the first observation.
+    x_uncertainty2 : float
+        x-uncertainty of the second observation.
+    y_uncertainty1 : float
+        y-uncertainty of the first observation.
+    y_uncertainty2 : float
+        y-uncertainty of the second observation.
+
+    Returns
+    -------
+    float
+        The Mahalanobis distance between the two locations.
+
+    """
+    x_measure = (location1[0] - location2[0]) ** 2 / (x_uncertainty1 + x_uncertainty2)
+    y_measure = (location1[0] - location2[1]) ** 2 / (y_uncertainty1 + y_uncertainty2)
+    return np.sqrt(x_measure + y_measure)
+
+
 if __name__ == "__main__":
     l1 = (0, 0)
     l2 = (1, 1)
