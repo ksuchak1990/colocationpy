@@ -22,7 +22,7 @@ logging.basicConfig(
 parser = ArgumentParser(
     prog="Trajectory generator", description="Generate trajectories using EPR models"
 )
-parser.add_argument("model_type", type=str, default="spatial")
+parser.add_argument("model_type", type=str, default="density")
 parser.add_argument("pop_size", type=int, default=100)
 args = parser.parse_args()
 
@@ -58,7 +58,6 @@ def make_populated_leeds_tessellation(
 def make_trajectories(
     start: str, end: str, tess: gpd.GeoDataFrame, pop_size: int, model_type: str
 ) -> skmob.TrajDataFrame:
-
     """
     Generate a collection of trajectories for a population of agents.
 
@@ -119,7 +118,7 @@ def make_trajectories(
 if __name__ == "__main__":
     clean_tessellation: bool = False
     verbose: bool = True
-    to_vis: bool = False
+    to_vis: bool = True
     to_read: bool = False
     to_write: bool = True
     to_stats: bool = False
@@ -158,7 +157,7 @@ if __name__ == "__main__":
         tdf.to_csv("data/traj.csv", index=False, date_format="%Y-%m-%d %H:%M:%S")
 
     if to_vis:
-        m = tdf.plot_trajectory()
+        m = tdf.plot_trajectory(max_users=5)
         m.save("traj.html")
 
     if to_stats:

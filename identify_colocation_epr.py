@@ -32,7 +32,8 @@ from colocation.utils import (
 # Constants
 T_TOLERANCE = np.timedelta64(2, "h")
 X_TOLERANCE = 1.0
-SHOW_TRAJ = False
+SHOW_TRAJ = True
+SAVE_COLOCS = True
 
 # Basic setup
 logging.basicConfig(
@@ -95,6 +96,10 @@ logging.info("Collecting results")
 all_observation_combinations = pd.concat(all_observation_combinations)
 
 logging.info("Number of instances found: %s", len(all_observation_combinations))
+
+if SAVE_COLOCS:
+    logging.info("Writing co-location combinations to `.csv`")
+    all_observation_combinations.to_csv("data/epr_coloc.csv")
 
 if args.show_locations:
     logging.info("Creating map of co-locations")
