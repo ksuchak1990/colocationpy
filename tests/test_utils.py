@@ -5,7 +5,7 @@ Test functions in `colocation.utils`
 # Imports
 import pytest
 from shapely.geometry import Polygon, LineString, Point
-from colocation.utils import (
+from colocationpy.utils import (
     is_divided_by_barrier,
     get_distance_around_barrier,
     get_closest_corner,
