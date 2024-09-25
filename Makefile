@@ -18,4 +18,4 @@ test:
 	pytest
 
 test-cov:
-	pytest --cov=colocation
+	pytest --cov=colocationpy
