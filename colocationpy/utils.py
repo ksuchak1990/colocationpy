@@ -10,7 +10,7 @@ from shapely import intersects, distance
 from shapely.geometry import LineString, MultiPoint, Point, mapping, Polygon
 from shapely.ops import nearest_points
 
-from colocation.base_colocation import BaseColocation
+from colocationpy.base_colocation import BaseColocation
 
 # Define types
 Numeric = Union[int, float]

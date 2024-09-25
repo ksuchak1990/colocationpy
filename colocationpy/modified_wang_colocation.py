@@ -5,8 +5,8 @@ the method to work with continuous space.
 
 # Imports
 import pandas as pd
-from colocation.wang_colocation import WangColocation
-from colocation.utils import get_distance
+from colocationpy.wang_colocation import WangColocation
+from colocationpy.utils import get_distance
 
 # Class
 

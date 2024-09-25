@@ -6,8 +6,8 @@ A class to calculate the colocation rate based on Wang et al. (2011)
 import numpy as np
 import pandas as pd
 
-from colocation.base_colocation import BaseColocation
-from colocation.utils import Coordinate, Numeric
+from colocationpy.base_colocation import BaseColocation
+from colocationpy.utils import Coordinate, Numeric
 
 
 class WangColocation(BaseColocation):
