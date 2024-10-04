@@ -69,7 +69,7 @@ def __get_haversine_distance(df: pd.DataFrame) -> pd.Series:
     a = (np.sin(lat_diff / 2)) ** 2 + np.cos(lat1) * np.cos(lat2) * (
         np.sin(lng_diff / 2.0)
     ) ** 2
-    c = 2.0 * np.atan2(np.sqrt(a), np.sqrt(1.0 - a))
+    c = 2.0 * np.arctan2(np.sqrt(a), np.sqrt(1.0 - a))
     km = R * c
     return km
 
