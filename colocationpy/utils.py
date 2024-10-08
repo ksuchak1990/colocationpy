@@ -6,6 +6,7 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 from shapely import intersects, distance
 from shapely.geometry import LineString, MultiPoint, Point, mapping, Polygon
 from shapely.ops import nearest_points
@@ -440,6 +441,28 @@ def get_mahalanobis_distance(
     x_measure = (location1[0] - location2[0]) ** 2 / (x_uncertainty1 + x_uncertainty2)
     y_measure = (location1[0] - location2[1]) ** 2 / (y_uncertainty1 + y_uncertainty2)
     return np.sqrt(x_measure + y_measure)
+
+
+def get_co_location_probability(
+    location1: Coordinate,
+    location2: Coordinate,
+    x_uncertainty1: float,
+    x_uncertainty2: float,
+    y_uncertainty1: float,
+    y_uncertainty2: float,
+    distance_threshold: float,
+) -> float:
+    mean_distance = np.sqrt(
+        (location1[0] - location2[0]) ** 2 + (location1[1] - location2[1]) ** 2
+    )
+
+    combined_std_x = np.sqrt(x_uncertainty1**2 + x_uncertainty2**2)
+    combined_std_y = np.sqrt(y_uncertainty1**2 + y_uncertainty2**2)
+
+    std_distance = np.sqrt(combined_std_x**2 + combined_std_y**2)
+
+    prob = norm.cdf(distance_threshold, mean_distance, std_distance)
+    return prob
 
 
 if __name__ == "__main__":
