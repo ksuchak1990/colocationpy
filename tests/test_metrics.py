@@ -5,7 +5,11 @@ Set of tests for the metrics calculated in this package.
 import pandas as pd
 import pytest
 
-from colocationpy.metrics import get_average_entropy, get_entropies
+from colocationpy.metrics import (
+    get_average_entropy,
+    get_entropies,
+    get_mutual_information,
+)
 
 entropy_data = [
     (
@@ -48,6 +52,28 @@ average_entropy_data = [
     ),
 ]
 
+mutual_information_data = [
+    (pd.DataFrame({"species_x": [1, 1, 2, 2], "species_y": [1, 2, 1, 2]}), 0.0),
+    (
+        pd.DataFrame(
+            {
+                "species_x": [1, 1, 1, 2, 2, 2, 3, 3, 3],
+                "species_y": [1, 2, 3, 1, 2, 3, 1, 2, 3],
+            }
+        ),
+        0.0,
+    ),
+    (
+        pd.DataFrame(
+            {
+                "species_x": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
+                "species_y": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+            }
+        ),
+        0.0,
+    ),
+]
+
 
 @pytest.mark.parametrize("data, expected", entropy_data)
 def test_get_entropies(data: pd.DataFrame, expected: pd.Series):
@@ -80,4 +106,21 @@ def test_get_average_entropy(data: pd.DataFrame, expected: float):
 
     """
     actual = get_average_entropy(data)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("data, expected", mutual_information_data)
+def test_get_mutual_information(data: pd.DataFrame, expected: float):
+    """
+    Test the `get_mutual_information()` method.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame of co-location instances.
+    expected : float
+        The expected average entropy.
+
+    """
+    actual = get_mutual_information(data)
     assert actual == expected
