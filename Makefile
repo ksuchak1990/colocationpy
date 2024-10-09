@@ -21,5 +21,5 @@ test-cov:
 	pytest --cov=colocationpy
 
 format:
-	black .
 	isort .
+	black .
