@@ -180,3 +180,23 @@ def get_network_modularity(data: pd.DataFrame) -> float:
     partition = community.best_partition(graph)
     modularity = community.modularity(partition, graph)
     return modularity
+
+
+def get_clustering_coefficient(data: pd.DataFrame) -> float:
+    """
+    Calculate the clustering coefficient for a DataFrame of co-location instances.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+
+    Returns
+    -------
+    float
+        The average clustering coefficient of the co-location network.
+
+    """
+    graph = __get_interaction_graph(data)
+    clustering = nx.average_clustering(graph)
+    return clustering
