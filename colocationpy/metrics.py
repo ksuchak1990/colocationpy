@@ -46,3 +46,22 @@ def get_entropies(data: pd.DataFrame) -> pd.Series:
     """
     entropies = data.apply(__get_record_entropy, axis=1)
     return entropies
+
+
+def get_average_entropy(data: pd.DataFrame) -> float:
+    """
+    Calculate the average entropy for a DataFrame of co-location instances.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame of co-location instances, with columns "species_x" and
+        "species_y" indicating the types/species of the two individuals involved
+        in the co-location.
+
+    Returns
+    -------
+    float
+        The mean entropy for the interactions identified.
+    """
+    return np.mean(get_entropies(data))
