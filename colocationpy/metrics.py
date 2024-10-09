@@ -155,6 +155,12 @@ def get_mutual_information(data: pd.DataFrame) -> float:
     return mutual_info
 
 
+def __get_interaction_graph(data: pd.DataFrame) -> nx.Graph:
+    adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
+    graph = nx.from_pandas_adjacency(adjacency_matrix)
+    return graph
+
+
 def get_network_modularity(data: pd.DataFrame) -> float:
     """
     Calculate the network modularity for a DataFrame of co-location instances.
@@ -170,8 +176,7 @@ def get_network_modularity(data: pd.DataFrame) -> float:
         The network modularity of the co-location network.
 
     """
-    adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
-    graph = nx.from_pandas_adjacency(adjacency_matrix)
+    graph = __get_interaction_graph(data)
     partition = community.best_partition(graph)
     modularity = community.modularity(partition, graph)
     return modularity
