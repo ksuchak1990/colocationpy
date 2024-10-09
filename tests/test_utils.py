@@ -4,13 +4,12 @@ Test functions in `colocation.utils`
 
 # Imports
 import pytest
-from shapely.geometry import Polygon, LineString, Point
-from colocationpy.utils import (
-    is_divided_by_barrier,
-    get_distance_around_barrier,
-    get_closest_corner,
-    get_mahalanobis_distance,
-)
+from shapely.geometry import LineString, Point, Polygon
+
+from colocationpy.utils import (get_closest_corner,
+                                get_distance_around_barrier,
+                                get_mahalanobis_distance,
+                                is_divided_by_barrier)
 
 diagonal_barrier = Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)])
 vertical_barrier = Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)])
