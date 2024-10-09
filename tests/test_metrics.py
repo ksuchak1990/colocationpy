@@ -26,7 +26,25 @@ average_entropy_data = [
         pd.DataFrame(
             {"species_x": ["a", "a", "b", "b"], "species_y": ["a", "b", "a", "b"]}
         ),
-        0.5,
+        1 / 2,
+    ),
+    (
+        pd.DataFrame(
+            {
+                "species_x": [1, 1, 1, 2, 2, 2, 3, 3, 3],
+                "species_y": [1, 2, 3, 1, 2, 3, 1, 2, 3],
+            }
+        ),
+        2 / 3,
+    ),
+    (
+        pd.DataFrame(
+            {
+                "species_x": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
+                "species_y": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+            }
+        ),
+        3 / 4,
     ),
 ]
 
