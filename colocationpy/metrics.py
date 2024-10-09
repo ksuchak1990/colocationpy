@@ -5,6 +5,8 @@ instances of co-location.
 
 from collections import Counter
 
+import community
+import networkx as nx
 import numpy as np
 import pandas as pd
 
@@ -151,3 +153,25 @@ def get_mutual_information(data: pd.DataFrame) -> float:
     mutual_info = np.sum(mutual_info_matrix)
 
     return mutual_info
+
+
+def get_network_modularity(data: pd.DataFrame) -> float:
+    """
+    Calculate the network modularity for a DataFrame of co-location instances.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+
+    Returns
+    -------
+    float
+        The network modularity of the co-location network.
+
+    """
+    adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
+    graph = nx.from_pandas_adjacency(adjacency_matrix)
+    partition = community.best_partition(graph)
+    modularity = community.modularity(partition, graph)
+    return modularity
