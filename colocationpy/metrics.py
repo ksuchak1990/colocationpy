@@ -283,3 +283,8 @@ def get_clustering_coefficient(data: pd.DataFrame) -> float:
     clustering = nx.average_clustering(graph)
     return clustering
 
+
+def get_assortativity_coefficient(data: pd.DataFrame) -> float:
+    graph = get_interaction_network(data)
+    assortativity = nx.attribute_assortativity_coefficient(graph, "species")
+    return assortativity
