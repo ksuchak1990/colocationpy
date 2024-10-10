@@ -155,11 +155,61 @@ def get_mutual_information(data: pd.DataFrame) -> float:
     return mutual_info
 
 
-def __get_interaction_graph(data: pd.DataFrame) -> nx.Graph:
+def get_species_interaction_network(data: pd.DataFrame) -> nx.Graph:
     adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
     graph = nx.from_pandas_adjacency(adjacency_matrix)
     return graph
 
+
+def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
+    """
+    Creates an undirected graph from a pandas DataFrame containing individual
+    interaction data. Each individual is represented as a node, and interactions
+    between individuals are represented as edges. Species information is added
+    as node attributes.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame containing individual interaction data with columns 'id_x',
+        'id_y', 'species_x', and 'species_y'.
+
+    Returns
+    -------
+    G : nx.Graph
+        A NetworkX graph representing the interaction network between
+        individuals, with species as node attributes.
+    """
+    # Initialize an undirected graph
+    graph = nx.Graph()
+
+    # Create edges between individuals (id_x and id_y) using vectorized operations
+    edges = list(zip(data["id_x"], data["id_y"]))
+
+    # Add edges to the graph
+    graph.add_edges_from(edges)
+
+    # Add species as node attributes using vectorized operations
+    # Concatenate the 'id_x' and 'id_y' columns along with their respective species
+    nodes_data = pd.concat(
+        [
+            data[["id_x", "species_x"]].rename(
+                columns={"id_x": "id", "species_x": "species"}
+            ),
+            data[["id_y", "species_y"]].rename(
+                columns={"id_y": "id", "species_y": "species"}
+            ),
+        ]
+    )
+
+    # Drop duplicates so each individual is processed only once
+    nodes_data = nodes_data.drop_duplicates(subset="id")
+
+    # Add species information as node attributes
+    species_dict = nodes_data.set_index("id")["species"].to_dict()
+    nx.set_node_attributes(graph, species_dict, "species")
+
+    return graph
 
 def get_network_modularity(data: pd.DataFrame) -> float:
     """
