@@ -6,6 +6,7 @@ instances of co-location.
 from collections import Counter
 
 import community
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -210,6 +211,23 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
     nx.set_node_attributes(graph, species_dict, "species")
 
     return graph
+
+
+def draw_interaction_network(graph: nx.Graph) -> None:
+    # Get the species attribute for each node
+    species = nx.get_node_attributes(graph, "species")
+
+    # Generate a colour map for the species
+    species_values = list(set(species.values()))  # Unique species values
+    # Assign an index for each species
+    colour_map = {species: idx for idx, species in enumerate(species_values)}
+    # Map node colours based on species
+    node_colours = [colour_map[species[node]] for node in graph.nodes()]
+
+    plt.figure()
+    nx.draw(graph, with_labels=True, node_color=node_colours)
+    plt.show()
+
 
 def get_network_modularity(data: pd.DataFrame) -> float:
     """
