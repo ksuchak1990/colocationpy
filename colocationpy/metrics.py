@@ -244,9 +244,23 @@ def get_network_modularity(data: pd.DataFrame) -> float:
         The network modularity of the co-location network.
 
     """
-    graph = __get_interaction_graph(data)
-    partition = community.best_partition(graph)
-    modularity = community.modularity(partition, graph)
+    graph = get_interaction_network(data)
+
+    species_communities = nx.get_node_attributes(graph, "species")
+
+    # Create communities based on species
+    communities = {}
+    for node, species in species_communities.items():
+        if species not in communities:
+            communities[species] = []
+        communities[species].append(node)
+
+    # Convert communities into the list format expected by networkx's
+    # modularity function
+    community_list = list(communities.values())
+
+    # Calculate the modularity of the graph based on species communities
+    modularity = nx.algorithms.community.modularity(graph, community_list)
     return modularity
 
 
