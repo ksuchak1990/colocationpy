@@ -279,6 +279,7 @@ def get_clustering_coefficient(data: pd.DataFrame) -> float:
         The average clustering coefficient of the co-location network.
 
     """
-    graph = __get_interaction_graph(data)
+    graph = get_interaction_network(data)
     clustering = nx.average_clustering(graph)
     return clustering
+
