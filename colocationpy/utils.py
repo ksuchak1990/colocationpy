@@ -7,9 +7,8 @@ from typing import List, Tuple, TypeAlias, Union
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from shapely import distance, intersects
-from shapely.geometry import LineString, MultiPoint, Point, Polygon, mapping
-from shapely.ops import nearest_points
+from shapely import intersects
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
 
 from colocationpy.base_colocation import BaseColocation
 
