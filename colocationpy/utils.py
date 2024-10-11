@@ -470,6 +470,13 @@ def get_bhattacharyya_coefficient(df: pd.DataFrame) -> pd.Series:
 
     return pd.Series(bc)
 
+
+def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
+    bc = get_bhattacharyya_coefficient(df)
+    bd = -np.log(bc)
+    return bd
+
+
 def get_co_location_probability(
     location1: Coordinate,
     location2: Coordinate,
