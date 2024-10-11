@@ -442,6 +442,34 @@ def get_mahalanobis_distance(
     return np.sqrt(x_measure + y_measure)
 
 
+def get_bhattacharyya_coefficient(df: pd.DataFrame) -> pd.Series:
+    mu_diff_x = df["lng_x"] - df["lng_y"]
+    mu_diff_y = df["lat_x"] - df["lat_y"]
+
+    # Covariance matrices diagonals (vectorised)
+    cov1_diag = np.array([df["sigma_xx"], df["sigma_xy"]]).T  # Shape (n, 2)
+    cov2_diag = np.array([df["sigma_yx"], df["sigma_yy"]]).T  # Shape (n, 2)
+
+    # Average covariance matrix diagonals
+    cov_avg_diag = (cov1_diag + cov2_diag) / 2  # Shape (n, 2)
+
+    # Determinants of the average covariance matrices (since they are diagonal, determinant is the product of the diagonal elements)
+    det_cov_avg = cov_avg_diag[:, 0] * cov_avg_diag[:, 1]  # Shape (n,)
+
+    # Inverses of the average covariance matrix diagonals
+    inv_cov_avg_diag_x = 1 / cov_avg_diag[:, 0]
+    inv_cov_avg_diag_y = 1 / cov_avg_diag[:, 1]
+
+    # Quadratic form (mu_diff_x^2 / sigma_avg_xx + mu_diff_y^2 / sigma_avg_yy)
+    quad_form = (mu_diff_x**2 * inv_cov_avg_diag_x) + (
+        mu_diff_y**2 * inv_cov_avg_diag_y
+    )
+
+    # Bhattacharyya coefficient (vectorised)
+    bc = (1 / np.sqrt(det_cov_avg)) * np.exp(-0.125 * quad_form)
+
+    return pd.Series(bc)
+
 def get_co_location_probability(
     location1: Coordinate,
     location2: Coordinate,
