@@ -22,3 +22,5 @@ format:
 
 lint:
 	ruff check --fix
+
+lf: lint format
