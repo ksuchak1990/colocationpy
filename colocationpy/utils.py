@@ -477,26 +477,26 @@ def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
     return bd
 
 
-def get_co_location_probability(
-    location1: Coordinate,
-    location2: Coordinate,
-    x_uncertainty1: float,
-    x_uncertainty2: float,
-    y_uncertainty1: float,
-    y_uncertainty2: float,
-    distance_threshold: float,
-) -> float:
-    mean_distance = np.sqrt(
-        (location1[0] - location2[0]) ** 2 + (location1[1] - location2[1]) ** 2
-    )
+def get_co_location_probability(df: pd.DataFrame, uncertainty: float) -> pd.Series:
+    mean_distance = __get_haversine_distance(df)
 
-    combined_std_x = np.sqrt(x_uncertainty1**2 + x_uncertainty2**2)
-    combined_std_y = np.sqrt(y_uncertainty1**2 + y_uncertainty2**2)
+    # sigma1_xx = df["sigma_xx"].fillna(uncertainty)
+    # sigma1_xy = df["sigma_xy"].fillna(uncertainty)
+    # sigma2_yx = df["sigma_yx"].fillna(uncertainty)
+    # sigma2_yy = df["sigma_yy"].fillna(uncertainty)
+    sigma1_xx = uncertainty
+    sigma1_xy = uncertainty
+    sigma2_yx = uncertainty
+    sigma2_yy = uncertainty
 
-    std_distance = np.sqrt(combined_std_x**2 + combined_std_y**2)
+    # Bhattacharyya coefficient formula
+    term1 = 0.25 * (mean_distance**2 / (sigma1_xx + sigma2_yx))
+    term2 = 0.5 * np.log(0.5 * (sigma1_xx / sigma2_yx + sigma1_xy / sigma2_yy))
 
-    prob = norm.cdf(distance_threshold, mean_distance, std_distance)
-    return prob
+    # Bhattacharyya coefficient (overlap score between 0 and 1)
+    bc = np.exp(-(term1 + term2))
+
+    return bc
 
 
 if __name__ == "__main__":
