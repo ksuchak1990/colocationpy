@@ -6,7 +6,6 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from shapely import intersects
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 
