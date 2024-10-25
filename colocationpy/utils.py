@@ -2,6 +2,7 @@
 A collection of utility functions.
 """
 
+import logging
 from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
@@ -19,6 +20,10 @@ Barrier = Union[LineString, Polygon]
 
 # Constants
 R = 6378.1370
+
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
 
 
 # Functions
