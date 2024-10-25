@@ -477,3 +477,17 @@ if __name__ == "__main__":
     l1 = (0, 0)
     l2 = (1, 1)
     print(get_distance(l1, l2))
+
+    # Example usage with a DataFrame
+    data = {
+        "lng_x": [-1.555467, -1.555467, -1.555467],
+        "lat_x": [53.804644, 53.804644, 53.804644],
+        "lng_y": [-1.555596, -1.555596, -1.555596],
+        "lat_y": [53.803289, 53.803289, 53.803289],
+        "uncertainty_x": [10, 50, 10],
+        "uncertainty_y": [10, 50, 50],
+    }
+
+    df = pd.DataFrame(data)
+    coefficient = get_bhattacharyya_coefficient(df)
+    logging.info("Bhattacharyya Coefficient: %s", coefficient)
