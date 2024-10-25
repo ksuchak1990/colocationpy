@@ -3,8 +3,6 @@ A collection of measurements that we may wish to take when considering
 instances of co-location.
 """
 
-from collections import Counter
-
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -16,16 +14,27 @@ def __get_shannon_entropy(proportions: list[float]) -> float:
     return -sum(proportion_entropies)
 
 
-def __get_record_entropy(record: pd.Series) -> float:
+def __get_record_entropy(record: pd.Series, species_proportions: pd.Series) -> float:
     all_species = [record["species_x"], record["species_y"]]
 
-    species_counts = Counter(all_species)
-    pop_size = sum(species_counts.values())
-
-    proportions = [count / pop_size for count in species_counts.values()]
-
+    proportions = [species_proportions[species] for species in all_species]
     record_entropy = __get_shannon_entropy(proportions)
+    # species_counts = Counter(all_species)
+    # pop_size = sum(species_counts.values())
+
+    # proportions = [count / pop_size for count in species_counts.values()]
+
+    # record_entropy = __get_shannon_entropy(proportions)
     return record_entropy
+
+
+def __get_proportions(data: pd.DataFrame) -> pd.Series:
+    x_counts = data["species_x"].value_counts()
+    y_counts = data["species_y"].value_counts()
+    total_counts = x_counts.add(y_counts, fill_value=0)
+
+    total_proportions = total_counts / total_counts.sum()
+    return total_proportions
 
 
 def get_entropies(data: pd.DataFrame) -> pd.Series:
@@ -46,7 +55,11 @@ def get_entropies(data: pd.DataFrame) -> pd.Series:
         where 1.0 means that the two types are not the same, and 0.0 means that
         they are the same.
     """
-    entropies = data.apply(__get_record_entropy, axis=1)
+    species_proportions = __get_proportions(data)
+
+    entropies = data.apply(
+        __get_record_entropy, axis=1, species_proportions=species_proportions
+    )
     return entropies
 
 
