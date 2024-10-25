@@ -441,61 +441,31 @@ def get_mahalanobis_distance(
     return np.sqrt(x_measure + y_measure)
 
 
-def get_bhattacharyya_coefficient(df: pd.DataFrame) -> pd.Series:
-    mu_diff_x = df["lng_x"] - df["lng_y"]
-    mu_diff_y = df["lat_x"] - df["lat_y"]
+def get_co_location_probability(df: pd.DataFrame) -> pd.Series:
+    distances = __get_haversine_distance(df)
 
-    # Covariance matrices diagonals (vectorised)
-    cov1_diag = np.array([df["sigma_xx"], df["sigma_xy"]]).T  # Shape (n, 2)
-    cov2_diag = np.array([df["sigma_yx"], df["sigma_yy"]]).T  # Shape (n, 2)
+    uncertainties_x = df["uncertainty_x"]
+    uncertainties_y = df["uncertainty_y"]
 
-    # Average covariance matrix diagonals
-    cov_avg_diag = (cov1_diag + cov2_diag) / 2  # Shape (n, 2)
-
-    # Determinants of the average covariance matrices (since they are diagonal, determinant is the product of the diagonal elements)
-    det_cov_avg = cov_avg_diag[:, 0] * cov_avg_diag[:, 1]  # Shape (n,)
-
-    # Inverses of the average covariance matrix diagonals
-    inv_cov_avg_diag_x = 1 / cov_avg_diag[:, 0]
-    inv_cov_avg_diag_y = 1 / cov_avg_diag[:, 1]
-
-    # Quadratic form (mu_diff_x^2 / sigma_avg_xx + mu_diff_y^2 / sigma_avg_yy)
-    quad_form = (mu_diff_x**2 * inv_cov_avg_diag_x) + (
-        mu_diff_y**2 * inv_cov_avg_diag_y
+    term1 = (1 / 4) * distances**2 / (uncertainties_x**2 + uncertainties_y**2)
+    term2 = np.log(
+        (uncertainties_x**2 + uncertainties_y**2)
+        / (2 * uncertainties_x * uncertainties_y)
     )
 
-    # Bhattacharyya coefficient (vectorised)
-    bc = (1 / np.sqrt(det_cov_avg)) * np.exp(-0.125 * quad_form)
+    bc = np.exp(-(term1 + term2))
+    return bc
 
-    return pd.Series(bc)
+
+def get_bhattacharyya_coefficient(df: pd.DataFrame) -> pd.Series:
+    bc = get_co_location_probability(df)
+    return bc
 
 
 def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
     bc = get_bhattacharyya_coefficient(df)
     bd = -np.log(bc)
     return bd
-
-
-def get_co_location_probability(df: pd.DataFrame, uncertainty: float) -> pd.Series:
-    mean_distance = __get_haversine_distance(df)
-
-    # sigma1_xx = df["sigma_xx"].fillna(uncertainty)
-    # sigma1_xy = df["sigma_xy"].fillna(uncertainty)
-    # sigma2_yx = df["sigma_yx"].fillna(uncertainty)
-    # sigma2_yy = df["sigma_yy"].fillna(uncertainty)
-    sigma1_xx = uncertainty
-    sigma1_xy = uncertainty
-    sigma2_yx = uncertainty
-    sigma2_yy = uncertainty
-
-    # Bhattacharyya coefficient formula
-    term1 = 0.25 * (mean_distance**2 / (sigma1_xx + sigma2_yx))
-    term2 = 0.5 * np.log(0.5 * (sigma1_xx / sigma2_yx + sigma1_xy / sigma2_yy))
-
-    # Bhattacharyya coefficient (overlap score between 0 and 1)
-    bc = np.exp(-(term1 + term2))
-
-    return bc
 
 
 if __name__ == "__main__":
