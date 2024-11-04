@@ -473,6 +473,32 @@ def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
     return bd
 
 
+def make_social_edge_list(
+    individual_data: pd.DataFrame, in_group_prob: float
+) -> List[Tuple[int, int]]:
+    __check_required_columns(individual_data, ["uid", "species"])
+    cross_species_prob = 1 - in_group_prob
+
+    # Combinations by cross-product
+    pairs = individual_data.merge(individual_data, how="cross", suffixes=("_x", "_y"))
+
+    # Filter out self-pairs (where uid_x == uid_y)
+    pairs = pairs[pairs["uid_x"] < pairs["uid_y"]]
+
+    # Assign edge_probabilities
+    pairs["edge_prob"] = np.where(
+        pairs["species_x"] == pairs["species_y"], in_group_prob, cross_species_prob
+    )
+
+    # Choose random edges
+    edges = pairs[np.random.rand(len(pairs)) < pairs["edge_prob"]]
+
+    # Create edge list
+    edge_list = list(edges[["uid_x", "uid_y"]].itertuples(index=False, name=None))
+
+    return edge_list
+
+
 if __name__ == "__main__":
     l1 = (0, 0)
     l2 = (1, 1)
