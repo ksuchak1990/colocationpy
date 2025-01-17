@@ -8,6 +8,8 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
+# from validation import check_for_required_columns
+
 
 def __get_shannon_entropy(proportions: list[float]) -> float:
     proportion_entropies = [p * np.log2(p) for p in proportions if p > 0]
@@ -37,30 +39,145 @@ def __get_proportions(data: pd.DataFrame) -> pd.Series:
     return total_proportions
 
 
-def get_entropies(data: pd.DataFrame) -> pd.Series:
-    """
-    Calculate entropies for a DataFrame of co-location instances.
+def __get_counts(
+    df: pd.DataFrame,
+    species_map: pd.DataFrame,
+    primary_column: str,
+    secondary_column: str,
+    primary_id: int | str,
+) -> pd.Series:
+    tdf = df.loc[df[primary_column] == primary_id, :]
+    tdf = tdf.loc[tdf[secondary_column] != primary_id, :]
+    individuals_in_contact = pd.DataFrame({"uid": tdf[secondary_column].unique()})
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and
-        "species_y" indicating the types/species of the two individuals involved
-        in the co-location.
-
-    Returns
-    -------
-    pd.Series
-        A Series of entropy measures for each of the co-location instances,
-        where 1.0 means that the two types are not the same, and 0.0 means that
-        they are the same.
-    """
-    species_proportions = __get_proportions(data)
-
-    entropies = data.apply(
-        __get_record_entropy, axis=1, species_proportions=species_proportions
+    individuals_in_contact = pd.merge(
+        left=individuals_in_contact, right=species_map, on="uid", how="left"
     )
+
+    counts = individuals_in_contact["species"].value_counts()
+
+    return counts
+
+
+def get_individual_entropies(
+    data: pd.DataFrame, species_map: pd.DataFrame
+) -> pd.DataFrame:
+    # required_columns = ["uid_x", "uid_y", "species_x", "species_y", "coloc_prob"]
+    # check_for_required_columns(data, required_columns)
+
+    ids_x = set(data["uid_x"].unique())
+    ids_y = set(data["uid_y"].unique())
+    all_ids = sorted(list(ids_x.union(ids_y)))
+
+    # if not np.isclose(data["coloc_prob"], 1.0).all():
+    #     raise ValueError("You have used the probabilistic approach!")
+
+    # print("You have used the deterministic approach")
+
+    entropies = []
+
+    for i in all_ids:
+        # uid_x
+        counts_x = __get_counts(data, species_map, "uid_x", "uid_y", i)
+
+        # uid_y
+        counts_y = __get_counts(data, species_map, "uid_y", "uid_x", i)
+
+        all_counts = counts_x.add(counts_y, fill_value=0)
+        proportions = all_counts / all_counts.sum()
+
+        entropy = __get_shannon_entropy(proportions)
+        d = {"uid": i, "entropy": entropy}
+
+        entropies.append(d)
+
+    entropies = pd.DataFrame(entropies)
     return entropies
+
+
+def get_location_entropies(
+    data: pd.DataFrame, species_map: pd.DataFrame, location_col: str = "LSOA21CD"
+) -> pd.DataFrame:
+    # required_columns = [location_col, "uid", "species"]
+    # check_for_required_columns(data, required_columns)
+
+    locations = data[location_col].unique()
+
+    entropies = []
+
+    for location in locations:
+        tdf = data.loc[data[location_col] == location, :]
+        individuals_at_location = pd.DataFrame({"uid": tdf["uid"].unique()})
+        individuals_at_location = pd.merge(
+            left=individuals_at_location, right=species_map, on="uid", how="left"
+        )
+        counts = individuals_at_location["species"].value_counts()
+        proportions = counts / counts.sum()
+        entropy = __get_shannon_entropy(proportions)
+        d = {location_col: location, "entropy": entropy}
+        entropies.append(d)
+
+    entropies = pd.DataFrame(entropies)
+
+    return entropies
+
+
+def get_entropies(data: pd.DataFrame, how: str = "location") -> pd.Series:
+    entropy_approaches = {
+        "individual": {
+            "required_columns": [
+                "uid_x",
+                "uid_y",
+                "species_x",
+                "species_y",
+                "coloc_prob",
+            ],
+            "method": get_individual_entropies,
+        },
+        "location": {
+            "required_columns": ["locationID", "uid", "species"],
+            "method": get_location_entropies,
+        },
+    }
+
+    assert how in entropy_approaches, (
+        f'"how" must be one of {list(entropy_approaches.keys())}'
+    )
+
+    # check_for_required_columns(data, entropy_approaches[how]["required_columns"])
+    entropies = entropy_approaches[how]["method"](data)
+
+    return entropies
+
+
+# def get_entropies(data: pd.DataFrame) -> pd.Series:
+#     """
+#     Calculate entropies for a DataFrame of co-location instances.
+
+#     Parameters
+#     ----------
+#     data : pd.DataFrame
+#         A DataFrame of co-location instances, with columns "species_x" and
+#         "species_y" indicating the types/species of the two individuals involved
+#         in the co-location.
+
+#     Returns
+#     -------
+#     pd.Series
+#         A Series of entropy measures for each of the co-location instances,
+#         where 1.0 means that the two types are not the same, and 0.0 means that
+#         they are the same.
+#     """
+#     species_proportions = __get_proportions(data)
+
+#     entropies = data.apply(
+#         __get_record_entropy, axis=1, species_proportions=species_proportions
+#     )
+#     return entropies
+
+
+def __get_species_pair(row: pd.Series):
+    return tuple(sorted([row["species_x"], row["species_y"]]))
 
 
 def get_average_entropy(data: pd.DataFrame) -> float:
@@ -79,7 +196,18 @@ def get_average_entropy(data: pd.DataFrame) -> float:
     float
         The mean entropy for the interactions identified.
     """
-    return np.mean(get_entropies(data))
+    data["species_pair"] = data.apply(__get_species_pair, axis=1)
+
+    pair_counts = data["species_pair"].value_counts()
+
+    total_interactions = pair_counts.sum()
+
+    probabilities = pair_counts / total_interactions
+
+    entropy = -np.sum(probabilities * np.log2(probabilities))
+
+    return entropy
+    # return np.mean(get_entropies(data))
 
 
 def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
@@ -197,7 +325,7 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
     graph = nx.Graph()
 
     # Create edges between individuals (id_x and id_y) using vectorized operations
-    edges = list(zip(data["id_x"], data["id_y"]))
+    edges = list(zip(data["uid_x"], data["uid_y"]))
 
     # Add edges to the graph
     graph.add_edges_from(edges)
@@ -206,11 +334,11 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
     # Concatenate the 'id_x' and 'id_y' columns along with their respective species
     nodes_data = pd.concat(
         [
-            data[["id_x", "species_x"]].rename(
-                columns={"id_x": "id", "species_x": "species"}
+            data[["uid_x", "species_x"]].rename(
+                columns={"uid_x": "id", "species_x": "species"}
             ),
-            data[["id_y", "species_y"]].rename(
-                columns={"id_y": "id", "species_y": "species"}
+            data[["uid_y", "species_y"]].rename(
+                columns={"uid_y": "id", "species_y": "species"}
             ),
         ]
     )
