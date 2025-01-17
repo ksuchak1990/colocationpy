@@ -409,6 +409,18 @@ def get_mahalanobis_distance(
 
 
 def get_co_location_probability(df: pd.DataFrame) -> pd.Series:
+    schema = pa.DataFrameSchema(
+        {
+            "lng_x": pa.Column(),
+            "lng_y": pa.Column(),
+            "lat_x": pa.Column(),
+            "lat_y": pa.Column(),
+            "uncertainty_x": pa.Column(),
+            "uncertainty_y": pa.Column(),
+        }
+    )
+    schema.validate(df)
+
     distances = __get_haversine_distance(df)
 
     uncertainties_x = df["uncertainty_x"]
