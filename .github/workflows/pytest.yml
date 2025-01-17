@@ -25,6 +25,14 @@ jobs:
           activate-environment: coloc
           auto-update-conda: true
 
+      # Step 3: Verify environment and installed packages
+      - name: Verify environment and installed packages
+        run: |
+          conda info
+          conda list
+          which python
+          which pytest
+
       # Step 3: Run tests
       - name: Run tests with pytest
         run: pytest
