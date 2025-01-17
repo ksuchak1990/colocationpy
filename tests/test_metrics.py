@@ -75,11 +75,25 @@ mutual_information_data = [
     ),
 ]
 
+individual_entropies_data = [
+    (
+        pd.DataFrame(
+            {
+                "uid_x": [1, 1, 1, 1, 2, 1],
+                "uid_y": [1, 2, 3, 4, 3, 5],
+                "species_x": [1, 1, 1, 1, 2, 1],
+                "species_y": [1, 2, 3, 1, 3, 2],
+                "coloc_prob": [1, 1, 1, 1, 1, 1],
+            }
+        ),
+        pd.DataFrame({"uid": [1, 2, 3, 4, 5], "species": [1, 2, 3, 1, 2]}),
+        pd.DataFrame({"uid": [1, 2, 3, 4, 5], "entropy": [1.5, 1.0, 1.0, -0.0, -0.0]}),
+    )
+]
 
-def test_get_individual_entropies():
-    data = pd.read_csv("data/coloc_data.csv")
-    species_map = pd.read_csv("data/species.csv")
-    expected = pd.read_csv("data/entropies_by_individual.csv")
+
+@pytest.mark.parametrize("data, species_map, expected", individual_entropies_data)
+def test_get_individual_entropies(data, species_map, expected):
     entropies = get_individual_entropies(data, species_map)
 
     pd.testing.assert_frame_equal(entropies, expected)
