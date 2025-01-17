@@ -148,6 +148,9 @@ def get_entropies(data: pd.DataFrame, how: str = "location") -> pd.Series:
         f'"how" must be one of {list(entropy_approaches.keys())}'
     )
 
+    required_columns = entropy_approaches[how]["required_columns"]
+    schema = pa.DataFrameSchema({rc: pa.Column() for rc in required_columns})
+    schema.validate(data)
     # check_for_required_columns(data, entropy_approaches[how]["required_columns"])
     entropies = entropy_approaches[how]["method"](data)
 
