@@ -7,6 +7,7 @@ from typing import List, Tuple, TypeAlias, Union
 
 import numpy as np
 import pandas as pd
+import pandera as pa
 from shapely import intersects
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 
@@ -108,7 +109,16 @@ def get_distances(df: pd.DataFrame) -> pd.Series:
         calculation.
 
     """
-    __check_required_columns(df, ["lat_x", "lat_y", "lng_x", "lng_y"])
+    # __check_required_columns(df, ["lat_x", "lat_y", "lng_x", "lng_y"])
+    schema = pa.DataFrameSchema(
+        {
+            "lat_x": pa.Column(),
+            "lat_y": pa.Column(),
+            "lng_x": pa.Column(),
+            "lng_y": pa.Column(),
+        }
+    )
+    schema.validate(df)
 
     distances = __get_haversine_distance(df)
 
@@ -241,7 +251,9 @@ def get_triangular_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
 def get_spatial_proximity(
     df: pd.DataFrame, x_tolerance: float, approach: str = "discrete"
 ) -> pd.Series:
-    __check_required_columns(df, ["distance"])
+    schema = pa.DataFrameSchema({"distance": pa.Column()})
+    schema.validate(df)
+    # __check_required_columns(df, ["distance"])
 
     approaches = {
         "discrete": get_discrete_proximity,
@@ -269,7 +281,9 @@ def get_time_difference(df: pd.DataFrame) -> pd.Series:
         Collection of time differences.
 
     """
-    __check_required_columns(df, ["datetime_x", "datetime_y"])
+    schema = pa.DataFrameSchema({"datetime_x": pa.Column(), "datetime_y": pa.Column()})
+    schema.validate(df)
+    # __check_required_columns(df, ["datetime_x", "datetime_y"])
 
     time_difference = df["datetime_x"] - df["datetime_y"]
     return time_difference
@@ -294,7 +308,9 @@ def is_temporally_proximal(df: pd.DataFrame, t_tolerance: float) -> pd.Series:
         tolerance.
 
     """
-    __check_required_columns(df, ["time_difference"])
+    schema = pa.DataFrameSchema({"time_difference": pa.Column()})
+    schema.validate(df)
+    # __check_required_columns(df, ["time_difference"])
 
     nearby = np.where(np.abs(df["time_difference"]) < t_tolerance, True, False)
     return pd.Series(nearby)
@@ -422,7 +438,14 @@ def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
 def make_social_edge_list(
     individual_data: pd.DataFrame, in_group_prob: float
 ) -> List[Tuple[int, int]]:
-    __check_required_columns(individual_data, ["uid", "species"])
+    schema = pa.DataFrameSchema(
+        {
+            "uid": pa.Column(),
+            "species": pa.Column(),
+        }
+    )
+    schema.validate(individual_data)
+    # __check_required_columns(individual_data, ["uid", "species"])
     cross_species_prob = 1 - in_group_prob
 
     # Combinations by cross-product

@@ -5,11 +5,9 @@ Set of tests for the metrics calculated in this package.
 import pandas as pd
 import pytest
 
-from colocationpy.metrics import (
-    # get_average_entropy,
-    # get_entropies,
-    get_mutual_information,
+from colocationpy.metrics import (  # get_average_entropy,; get_entropies,
     get_individual_entropies,
+    get_mutual_information,
 )
 
 # entropy_data = [

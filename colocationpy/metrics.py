@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-
-# from validation import check_for_required_columns
+import pandera as pa
 
 
 def __get_shannon_entropy(proportions: list[float]) -> float:
@@ -31,6 +30,9 @@ def __get_record_entropy(record: pd.Series, species_proportions: pd.Series) -> f
 
 
 def __get_proportions(data: pd.DataFrame) -> pd.Series:
+    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
+    schema.validate(data)
+
     x_counts = data["species_x"].value_counts()
     y_counts = data["species_y"].value_counts()
     total_counts = x_counts.add(y_counts, fill_value=0)
@@ -64,6 +66,8 @@ def get_individual_entropies(
 ) -> pd.DataFrame:
     # required_columns = ["uid_x", "uid_y", "species_x", "species_y", "coloc_prob"]
     # check_for_required_columns(data, required_columns)
+    schema = pa.DataFrameSchema({"uid_x": pa.Column(), "uid_y": pa.Column()})
+    schema.validate(data)
 
     ids_x = set(data["uid_x"].unique())
     ids_y = set(data["uid_y"].unique())
@@ -224,6 +228,9 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         A DataFrame containing the joint probabilities of species_x and species_y.
     """
+    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
+    schema.validate(data)
+
     # Calculate joint frequencies (counts)
     joint_freq = pd.crosstab(data["species_x"], data["species_y"])
 
@@ -248,6 +255,9 @@ def __get_marginal_distribution(data: pd.DataFrame) -> pd.Series:
     pd.Series
         A Series containing marginal probabilities for each species.
     """
+    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
+    schema.validate(data)
+
     # Marginal probabilities for species_x
     species_x_prob = data["species_x"].value_counts(normalize=True)
 
@@ -321,6 +331,9 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
         A NetworkX graph representing the interaction network between
         individuals, with species as node attributes.
     """
+    schema = pa.DataFrameSchema({"uid_x": pa.Column(), "uid_y": pa.Column()})
+    schema.validate(data)
+
     # Initialize an undirected graph
     graph = nx.Graph()
 
