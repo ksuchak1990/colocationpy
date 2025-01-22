@@ -84,11 +84,55 @@ transform_df_expected = pd.DataFrame(
 transform_df_data = [(transform_df_input, reference_data, transform_df_expected)]
 
 
-# TODO: Define data for time transform test
-transform_time_data = []
+# Define data for time transform test
+# Each set of test values should have start_time, time_step, interval_duration
+# and expected
+# These should be of type pd.Timestamp, int, pd.Timedelta, pd.Timestamp
+transform_time_data = [
+    (
+        pd.Timestamp("2024-01-01 11:00:00"),
+        5,
+        pd.Timedelta(minutes=1),
+        pd.Timestamp("2024-01-01 11:05:00"),
+    ),
+    (
+        pd.Timestamp("2024-01-01 11:00:00"),
+        5,
+        pd.Timedelta(minutes=5),
+        pd.Timestamp("2024-01-01 11:25:00"),
+    ),
+    (
+        pd.Timestamp("2024-01-01 11:00:00"),
+        100,
+        pd.Timedelta(minutes=1),
+        pd.Timestamp("2024-01-01 12:40:00"),
+    ),
+]
 
-# TODO: Define data for dataframe time transform test
-transform_time_df_data = []
+# Define data for dataframe time transform test
+# This should be a dataframe with multiple columns
+# One of the columns should be a timestamp
+# The expected return should be the same dataframe but with the timestamp column
+# replaced (or not?) by a datetime column
+# The test should provide start_time, df, interval_duration and expected
+
+transform_time_df_data = [
+    (
+        pd.Timestamp("2024-01-01 11:00:00"),
+        pd.DataFrame({"x": [1, 2, 3], "time_step": [1, 10, 50]}),
+        pd.Timedelta(minutes=1),
+        pd.DataFrame(
+            {
+                "x": [1, 2, 3],
+                "datetime": [
+                    pd.Timestamp("2024-01-01 11:01:00"),
+                    pd.Timestamp("2024-01-01 11:10:00"),
+                    pd.Timestamp("2024-01-01 11:50:00"),
+                ],
+            }
+        ),
+    )
+]
 
 # Tests
 
@@ -138,4 +182,4 @@ def test_apply_time_transform(start_time, time_step, interval_duration, expected
 )
 def test_apply_time_transform_df(start_time, df, interval_duration, expected):
     result = apply_time_transform_df(start_time, df, interval_duration)
-    np.testing.assert_array_almost_equal(result.values, expected.values)
+    pd.testing.assert_frame_equal(result, expected)

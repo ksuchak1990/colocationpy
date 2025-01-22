@@ -67,11 +67,22 @@ def construct_transformation(
     return result.x
 
 
-def apply_time_transform(start_time, time_step, interval_duration):
-    # TODO:Write time transform function
-    pass
+def apply_time_transform(
+    start_time: pd.Timestamp, time_step: int, interval_duration: pd.Timedelta
+) -> pd.Timestamp:
+    return start_time + (time_step * interval_duration)
 
 
-def apply_time_transform_df(start_time, df, interval_duration):
-    # TODO: Write function to apply time transform across dataframes
-    pass
+def apply_time_transform_df(
+    start_time: pd.Timestamp,
+    df: pd.DataFrame,
+    interval_duration: pd.Timedelta,
+    replace: bool = True,
+):
+    df["start_time"] = start_time
+    df["datetime"] = df["start_time"] + (interval_duration * df["time_step"])
+    df = df.drop(columns=["start_time"])
+
+    df = df.drop(columns=["time_step"]) if replace else df
+
+    return df
