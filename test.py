@@ -2,7 +2,7 @@
 import pandas as pd
 import skmob
 import logging
-from colocationpy.transformation import construct_transformation, transform_dataframe
+from colocationpy.transformations import construct_transformation, transform_dataframe
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,4 +51,4 @@ tdf = skmob.TrajDataFrame(
 
 logging.info("Plotting trajectories")
 m = tdf.plot_trajectory(max_users=5)
-m.save("indoor_trajectories.html")
+m.save("outputs/indoor_trajectories.html")

@@ -14,23 +14,23 @@ def extract_geo_coords(reference_data: dict[str, dict[str, float]]) -> np.ndarra
     return np.array([(v["lon"], v["lat"]) for v in reference_data.values()])
 
 
-def calculate_residuals(params, local_coords, geo_coords):
+def calculate_residuals(transform_params, local_coords, geo_coords):
     # Function to compute residuals for the transformation
-    a, b, c, d, e, f = params
+    a, b, c, d, e, f = transform_params
     transformed = np.dot(local_coords, [[a, b], [d, e]]) + [c, f]
     # Compute residuals between transformed and geographic coordinates
     return np.sum((geo_coords - transformed) ** 2)
 
 
-def apply_affine_transform(xy_coords, params):
+def apply_affine_transform(xy_coords, transform_params):
     # Function to apply the affine transformation
-    a, b, c, d, e, f = params
+    a, b, c, d, e, f = transform_params
     transformed = np.dot(xy_coords, [[a, b], [d, e]]) + [c, f]
     return transformed
 
 
 def transform_dataframe(
-    df: pd.DataFrame, params: list[float], replace: bool = True
+    df: pd.DataFrame, transform_params: list[float], replace: bool = True
 ) -> pd.DataFrame:
     # Ensure that data contains x-y columns
     schema = pa.DataFrameSchema({"x": pa.Column(), "y": pa.Column()})
@@ -38,7 +38,7 @@ def transform_dataframe(
 
     # Apply the transformation to the DataFrame
     xy_coords = df[["x", "y"]].values
-    transformed_coords = apply_affine_transform(xy_coords, params)
+    transformed_coords = apply_affine_transform(xy_coords, transform_params)
     df["lon"], df["lat"] = transformed_coords[:, 0], transformed_coords[:, 1]
 
     # Get rid of original x-y columns if necessary
@@ -59,7 +59,8 @@ def construct_transformation(
         calculate_residuals,
         initial_guess,
         args=(local_coords, geo_coords),
-        options={"disp": True},
+        options={"disp": False},
+        method="Powell",
     )
 
     return result.x
