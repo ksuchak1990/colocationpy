@@ -1,8 +1,11 @@
 # Imports
 import pandas as pd
 import skmob
-
+import logging
 from colocationpy.transformation import construct_transformation, transform_dataframe
+
+logging.basicConfig(level=logging.INFO)
+
 
 # Trial run
 x0, y0 = 0, 0
@@ -25,14 +28,16 @@ reference_data = {
 # Initial guess for the affine transformation parameters
 initial_guess = [1, 0, 0, 0, 1, 0]
 
-
+logging.info("Setting up transformation")
 affine_transform = construct_transformation(reference_data, initial_guess=initial_guess)
 
 # Apply to indoor mobility trajectories
+logging.info("Reading in data")
 data_path = "../colocation_experiments/data/agent_traj_CINCHserverparams_sq_20240619_1_1723552143.csv"
 data = pd.read_csv(data_path)
 data = data.dropna(how="any")
 
+logging.info("Transforming data")
 transformed_data = transform_dataframe(data, affine_transform)
 
 tdf = skmob.TrajDataFrame(
@@ -44,5 +49,6 @@ tdf = skmob.TrajDataFrame(
     timestamp=True,
 )
 
-m = tdf.plot_trajectory()
-m.show_in_browser()
+logging.info("Plotting trajectories")
+m = tdf.plot_trajectory(max_users=5)
+m.save("indoor_trajectories.html")
