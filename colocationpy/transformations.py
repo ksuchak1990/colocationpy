@@ -60,6 +60,7 @@ def construct_transformation(
         initial_guess,
         args=(local_coords, geo_coords),
         options={"disp": False},
+        # WARNING: Not sure which method is most appropriate here
         method="Powell",
     )
 
