@@ -65,3 +65,13 @@ def construct_transformation(
     )
 
     return result.x
+
+
+def apply_time_transform(start_time, time_step, interval_duration):
+    # TODO:Write time transform function
+    pass
+
+
+def apply_time_transform_df(start_time, df, interval_duration):
+    # TODO: Write function to apply time transform across dataframes
+    pass

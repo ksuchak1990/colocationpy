@@ -5,6 +5,8 @@ import pytest
 
 from colocationpy.transformations import (
     apply_affine_transform,
+    apply_time_transform,
+    apply_time_transform_df,
     construct_transformation,
     extract_geo_coords,
     extract_local_coords,
@@ -81,6 +83,13 @@ transform_df_expected = pd.DataFrame(
 
 transform_df_data = [(transform_df_input, reference_data, transform_df_expected)]
 
+
+# TODO: Define data for time transform test
+transform_time_data = []
+
+# TODO: Define data for dataframe time transform test
+transform_time_df_data = []
+
 # Tests
 
 
@@ -114,3 +123,19 @@ def test_transform_dataframe(df, reference_data, expected):
     transform_params = construct_transformation(reference_data)
     result = transform_dataframe(df, transform_params)
     np.testing.assert_array_almost_equal(result.values, expected.values, decimal=5)
+
+
+@pytest.mark.parametrize(
+    "start_time, time_step, interval_duration, expected", transform_time_data
+)
+def test_apply_time_transform(start_time, time_step, interval_duration, expected):
+    result = apply_time_transform(start_time, time_step, interval_duration)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "start_time, df, interval_duration, expected", transform_time_df_data
+)
+def test_apply_time_transform_df(start_time, df, interval_duration, expected):
+    result = apply_time_transform_df(start_time, df, interval_duration)
+    np.testing.assert_array_almost_equal(result.values, expected.values)
