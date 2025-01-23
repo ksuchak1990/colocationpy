@@ -80,9 +80,9 @@ def apply_time_transform_df(
     replace: bool = True,
 ):
     df["start_time"] = start_time
-    df["datetime"] = df["start_time"] + (interval_duration * df["time_step"])
+    df["datetime"] = df["start_time"] + (interval_duration * df["timestep"])
     df = df.drop(columns=["start_time"])
 
-    df = df.drop(columns=["time_step"]) if replace else df
+    df = df.drop(columns=["timestep"]) if replace else df
 
     return df

@@ -119,7 +119,7 @@ transform_time_data = [
 transform_time_df_data = [
     (
         pd.Timestamp("2024-01-01 11:00:00"),
-        pd.DataFrame({"x": [1, 2, 3], "time_step": [1, 10, 50]}),
+        pd.DataFrame({"x": [1, 2, 3], "timestep": [1, 10, 50]}),
         pd.Timedelta(minutes=1),
         pd.DataFrame(
             {
