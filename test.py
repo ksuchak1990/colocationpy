@@ -1,8 +1,12 @@
 # Imports
+import logging
 import pandas as pd
 import skmob
-import logging
-from colocationpy.transformations import construct_transformation, transform_dataframe
+from colocationpy.transformations import (
+    apply_time_transform_df,
+    construct_transformation,
+    transform_dataframe,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -38,7 +42,17 @@ data = pd.read_csv(data_path)
 data = data.dropna(how="any")
 
 logging.info("Transforming data")
+logging.info("Spatial transformation")
 transformed_data = transform_dataframe(data, affine_transform)
+
+logging.info("Temporal transformation")
+transformed_data = apply_time_transform_df(
+    start_time=pd.Timestamp("2025-01-24 12:00:00"),
+    df=transformed_data,
+    interval_duration=pd.Timedelta(seconds=1),
+    replace=True,
+)
+
 
 tdf = skmob.TrajDataFrame(
     transformed_data,
@@ -46,8 +60,9 @@ tdf = skmob.TrajDataFrame(
     longitude="lon",
     datetime="timestep",
     user_id="id",
-    timestamp=True,
 )
+
+print(tdf.head())
 
 logging.info("Plotting trajectories")
 m = tdf.plot_trajectory(max_users=5)
