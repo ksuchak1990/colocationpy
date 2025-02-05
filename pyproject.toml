@@ -1,0 +1,31 @@
+[project]
+name = "colocationpy"
+version = "0.1.0"
+description = "Same place, same time"
+authors = [
+    {name = "Keiran Suchak",email = "ksuchak1990@yahoo.co.uk"}
+]
+license = {text = "BSD-3-Clause"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "networkx (>=3.4.2,<4.0.0)",
+    "numpy (>=2.2.2,<3.0.0)",
+    "pandas (>=2.2.3,<3.0.0)",
+    "pandera (>=0.22.1,<0.23.0)",
+    "scipy (>=1.15.1,<2.0.0)",
+    "shapely (>=2.0.7,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+ruff = "^0.9.4"
+pytest-cov = "^6.0.0"
+neovim = "^0.3.1"
+python-lsp-server = "^1.12.0"
+
