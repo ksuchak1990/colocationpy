@@ -11,32 +11,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -el {0}
 
     steps:
-      # Step 1: Check out the repository
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up Miniconda
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: env.yml
-          activate-environment: coloc
-          auto-update-conda: false
-          auto-activate-base: false
-
-      # Step 3: Verify environment and installed packages
-      - name: Verify environment and installed packages
-        run: |
-          conda info
-          conda list
-          which python
-          which pytest
-
-      # Step 3: Run tests
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v4
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v4
+      - name: Install dependencies
+        run: poetry install --with dev
       - name: Run tests with pytest
         run: pytest
