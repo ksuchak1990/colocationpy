@@ -79,6 +79,9 @@ def apply_time_transform_df(
     interval_duration: pd.Timedelta,
     replace: bool = True,
 ):
+    schema = pa.DataFrameSchema({"timestep": pa.Column()})
+    schema.validate(df)
+
     df["start_time"] = start_time
     df["datetime"] = df["start_time"] + (interval_duration * df["timestep"])
     df = df.drop(columns=["start_time"])
