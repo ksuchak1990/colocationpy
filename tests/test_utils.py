@@ -4,7 +4,7 @@ Test functions in `colocation.utils`
 
 # Imports
 import pytest
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, Point, Polygon, MultiPolygon
 
 from colocationpy.utils import (
     get_closest_corner,
@@ -16,6 +16,42 @@ from colocationpy.utils import (
 diagonal_barrier = Polygon([(0, 9), (1, 10), (10, 1), (9, 0), (0, 9)])
 vertical_barrier = Polygon([(4, 2), (5, 2), (5, 9), (4, 9), (4, 2)])
 corner_barrier = Polygon([(0, 4), (0, 5), (5, 5), (5, 0), (4, 0), (4, 4), (0, 4)])
+barrier1 = Polygon(
+    [
+        (35, 35),
+        (35, 705),
+        (850, 705),
+        (850, 700),
+        (750, 700),
+        (750, 500),
+        (400, 500),
+        (400, 200),
+        (200, 200),
+        (200, 40),
+        (335, 40),
+        (335, 35),
+        (35, 35),
+    ]
+)
+
+barrier2 = Polygon(
+    [
+        (350, 35),
+        (350, 40),
+        (400, 40),
+        (400, 500),
+        (1050, 500),
+        (1050, 700),
+        (865, 700),
+        (865, 705),
+        (1179, 705),
+        (1179, 35),
+        (350, 35),
+    ]
+)
+
+barrier_geom = MultiPolygon([barrier1, barrier2])
+
 
 # Define test data
 barrier_divide_data = [
@@ -34,6 +70,24 @@ barrier_divide_data = [
         (0, 10),
         (10, 10),
         corner_barrier,
+        False,
+    ),
+    (
+        (300, 0),
+        (300, 100),
+        barrier_geom,
+        True,
+    ),
+    (
+        (0, 100),
+        (350, 100),
+        barrier_geom,
+        True,
+    ),
+    (
+        (250, 100),
+        (350, 100),
+        barrier_geom,
         False,
     ),
 ]
