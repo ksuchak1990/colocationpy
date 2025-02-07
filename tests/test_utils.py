@@ -30,6 +30,12 @@ barrier_divide_data = [
         corner_barrier,
         True,
     ),
+    (
+        (0, 10),
+        (10, 10),
+        corner_barrier,
+        False,
+    ),
 ]
 
 corner_data = [((0, 5), vertical_barrier, Point((4, 2)))]
