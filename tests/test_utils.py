@@ -4,12 +4,14 @@ Test functions in `colocation.utils`
 
 # Imports
 import pytest
+import pandas as pd
 from shapely.geometry import LineString, Point, Polygon, MultiPolygon
 
 from colocationpy.utils import (
     get_closest_corner,
     get_distance_around_barrier,
     get_mahalanobis_distance,
+    get_discrete_proximity,
     is_divided_by_barrier,
 )
 
@@ -104,8 +106,29 @@ mahalanobis_data = [
     ((0, 0), (1, 0), 0.5, 0.5, 0.5, 0.5, 1),
 ]
 
+discrete_proximity_data = [
+    (pd.DataFrame({"distance": [1, 2, 3]}), 2, pd.Series([True, True, False])),
+    (pd.DataFrame({"distance": [1, 2, 3]}), 2.5, pd.Series([True, True, False])),
+    (pd.DataFrame({"distance": [1, 2, 3]}), 0.5, pd.Series([False, False, False])),
+    (
+        pd.DataFrame({"distance": [0.002863, 0.004824, 0.0012]}),
+        0.002,
+        pd.Series([False, False, True]),
+    ),
+]
+
 
 # Tests
+
+
+@pytest.mark.parametrize("df, tolerance, expected", discrete_proximity_data)
+def test_discrete_proximity(df, tolerance, expected):
+    result = get_discrete_proximity(df, tolerance)
+    print(expected)
+    print(result)
+    pd.testing.assert_series_equal(result, expected)
+
+
 @pytest.mark.parametrize("location1, location2, barrier, expected", barrier_divide_data)
 def test_divided_by_barrier(location1, location2, barrier, expected):
     result = is_divided_by_barrier(location1, location2, barrier)
