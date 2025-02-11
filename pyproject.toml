@@ -1,6 +1,6 @@
 [project]
 name = "colocationpy"
-version = "0.1.0"
+version = "0.1.6"
 description = "Same place, same time"
 authors = [
     {name = "Keiran Suchak",email = "ksuchak1990@yahoo.co.uk"}
