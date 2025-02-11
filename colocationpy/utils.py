@@ -56,7 +56,7 @@ def __get_haversine_distance(df: pd.DataFrame) -> pd.Series:
     Returns
     -------
     pd.Series
-        Series of distances.
+        Series of distances in kilometres.
 
     """
     # Convert lat-lng to radians
