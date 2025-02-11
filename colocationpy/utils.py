@@ -239,9 +239,9 @@ def get_closest_corner(location, barrier) -> Point:
 
 
 def get_discrete_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
-    tolerances = pd.Series(len(df) * [x_tolerance])
-    nearby = np.less_equal(df["distance"], tolerances)
-    return pd.Series(nearby)
+    nearby = df["distance"] <= x_tolerance
+    nearby = nearby.rename(None)
+    return nearby
 
 
 def get_triangular_proximity(df: pd.DataFrame, x_tolerance: float) -> pd.Series:
