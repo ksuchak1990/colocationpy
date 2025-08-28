@@ -309,6 +309,9 @@ def get_mutual_information(data: pd.DataFrame) -> float:
 
 
 def get_species_interaction_network(data: pd.DataFrame) -> nx.Graph:
+    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
+    schema.validate(data)
+
     adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
     graph = nx.from_pandas_adjacency(adjacency_matrix)
     return graph
