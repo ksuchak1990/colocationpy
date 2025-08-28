@@ -1,75 +1,76 @@
-"""
-Set of tests for the metrics calculated in this package.
-"""
-
+# tests/test_metrics.py
 import math
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from colocationpy.metrics import (  # get_average_entropy,; get_entropies,
-    get_individual_entropies,
-    get_mutual_information,
+from colocationpy.metrics import (
+    __get_marginal_distribution,
     get_average_entropy,
+    get_entropies,
+    get_individual_entropies,
+    get_interaction_network,
+    get_mutual_information,
+    get_species_interaction_network,
 )
 
 CASES = {
-    # Three unordered pairs with equal frequency: H = log2(3)
     "balanced_three": [("cat", "dog"), ("cat", "cat"), ("dog", "dog")],
-    # Frequencies: {("cat","dog"):2, ("cat","cat"):1, ("dog","dog"):1} ⇒ [0.5, 0.25, 0.25]
     "skewed_three": [("cat", "dog"), ("cat", "dog"), ("cat", "cat"), ("dog", "dog")],
-    # Empty → 0.0 by definition
     "empty": [],
 }
-# entropy_data = [
-#     (
-#         pd.DataFrame({"species_x": [1, 1, 2, 2], "species_y": [1, 2, 1, 2]}),
-#         pd.Series([0.0, 1.0, 1.0, 0.0]),
-#     ),
-#     (
-#         pd.DataFrame(
-#             {"species_x": ["a", "a", "b", "b"], "species_y": ["a", "b", "a", "b"]}
-#         ),
-#         pd.Series([0.0, 1.0, 1.0, 0.0]),
-#     ),
-# ]
 
-# average_entropy_data = [
-#     (pd.DataFrame({"species_x": [1, 1, 2, 2], "species_y": [1, 2, 1, 2]}), 0.5),
-#     (
-#         pd.DataFrame(
-#             {"species_x": ["a", "a", "b", "b"], "species_y": ["a", "b", "a", "b"]}
-#         ),
-#         1 / 2,
-#     ),
-#     (
-#         pd.DataFrame(
-#             {
-#                 "species_x": [1, 1, 1, 2, 2, 2, 3, 3, 3],
-#                 "species_y": [1, 2, 3, 1, 2, 3, 1, 2, 3],
-#             }
-#         ),
-#         2 / 3,
-#     ),
-#     (
-#         pd.DataFrame(
-#             {
-#                 "species_x": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
-#                 "species_y": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
-#             }
-#         ),
-#         3 / 4,
-#     ),
-# ]
+SPECIES_MAP = pd.DataFrame(
+    {
+        "uid": ["u1", "u2", "u3", "u4", "u5"],
+        "species": ["cat", "cat", "dog", "fox", "dog"],
+    }
+)
 
-mutual_information_data = [
-    (pd.DataFrame({"species_x": [1, 1, 2, 2], "species_y": [1, 2, 1, 2]}), 0.0),
+CONTACTS = pd.DataFrame(
+    {
+        "uid_x": ["u1", "u1", "u1", "u1", "u2", "u1"],
+        "uid_y": ["u1", "u2", "u3", "u4", "u3", "u5"],
+        "species_x": ["cat", "cat", "cat", "cat", "dog", "cat"],
+        "species_y": ["cat", "dog", "fox", "cat", "dog", "dog"],
+        "coloc_prob": [1, 1, 1, 1, 1, 1],
+    }
+)
+
+LOCATIONS = pd.DataFrame(
+    {
+        "locationID": ["L1", "L1", "L2", "L2", "L3"],
+        "uid": ["u1", "u2", "u3", "u4", "u1"],
+    }
+)
+
+SPECIES_ONLY = pd.DataFrame(
+    {
+        "species_x": ["cat", "cat", "dog", "dog", "dog"],
+        "species_y": ["dog", "cat", "cat", "fox", "dog"],
+    }
+)
+
+SPECIES_NET_INPUT = pd.DataFrame(
+    {
+        "species_x": ["cat", "cat", "dog", "dog", "cat"],
+        "species_y": ["dog", "cat", "cat", "fox", "cat"],
+    }
+)
+
+MUTUAL_INFORMATION_DATA = [
+    (
+        pd.DataFrame(
+            {"species_x": ["1", "1", "2", "2"], "species_y": ["1", "2", "1", "2"]}
+        ),
+        0.0,
+    ),
     (
         pd.DataFrame(
             {
-                "species_x": [1, 1, 1, 2, 2, 2, 3, 3, 3],
-                "species_y": [1, 2, 3, 1, 2, 3, 1, 2, 3],
+                "species_x": ["1", "1", "1", "2", "2", "2", "3", "3", "3"],
+                "species_y": ["1", "2", "3", "1", "2", "3", "1", "2", "3"],
             }
         ),
         0.0,
@@ -77,27 +78,59 @@ mutual_information_data = [
     (
         pd.DataFrame(
             {
-                "species_x": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
-                "species_y": [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+                "species_x": [
+                    "1",
+                    "1",
+                    "1",
+                    "1",
+                    "2",
+                    "2",
+                    "2",
+                    "2",
+                    "3",
+                    "3",
+                    "3",
+                    "3",
+                    "4",
+                    "4",
+                    "4",
+                    "4",
+                ],
+                "species_y": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                ],
             }
         ),
         0.0,
     ),
 ]
 
-individual_entropies_data = [
+
+INDIVIDUAL_ENTROPIES_DATA = [
     (
+        CONTACTS,
+        SPECIES_MAP.loc[SPECIES_MAP["uid"].isin(["u1", "u2", "u3", "u4", "u5"])],
         pd.DataFrame(
             {
-                "uid_x": [1, 1, 1, 1, 2, 1],
-                "uid_y": [1, 2, 3, 4, 3, 5],
-                "species_x": [1, 1, 1, 1, 2, 1],
-                "species_y": [1, 2, 3, 1, 3, 2],
-                "coloc_prob": [1, 1, 1, 1, 1, 1],
+                "uid": ["u1", "u2", "u3", "u4", "u5"],
+                "entropy": [1.5, 1.0, 1.0, -0.0, -0.0],
             }
         ),
-        pd.DataFrame({"uid": [1, 2, 3, 4, 5], "species": [1, 2, 3, 1, 2]}),
-        pd.DataFrame({"uid": [1, 2, 3, 4, 5], "entropy": [1.5, 1.0, 1.0, -0.0, -0.0]}),
     )
 ]
 
@@ -109,46 +142,57 @@ def make_df(pairs):
 def expected_entropy_from_pairs(pairs) -> float:
     if not pairs:
         return 0.0
-    # Unordered species pairs (sorted tuple), matching the intended metric
     ser = pd.Series([tuple(sorted(p)) for p in pairs])
     counts = ser.value_counts()
     total = int(counts.sum())
     p = counts.values / total
-    # Shannon entropy base 2
     return float(-(p * np.log2(p)).sum())
 
 
-@pytest.mark.parametrize("data, species_map, expected", individual_entropies_data)
-def test_get_individual_entropies(data, species_map, expected):
-    entropies = get_individual_entropies(data, species_map)
+def _reference_individual_entropies(
+    contacts: pd.DataFrame, species_map: pd.DataFrame
+) -> pd.DataFrame:
+    """Mirror the implementation: unique partners per direction, exclude self."""
+    species_of = dict(zip(species_map["uid"], species_map["species"]))
+    # Sorted union of all uids, as in the implementation
+    uids = sorted(set(contacts["uid_x"]).union(set(contacts["uid_y"])))
+    rows = []
+    for uid in uids:
+        # Partners seen as uid_x (look at uid_y), unique and not self
+        partners_x = pd.unique(contacts.loc[contacts["uid_x"] == uid, "uid_y"])
+        partners_x = [p for p in partners_x if p != uid]
+        sx = pd.Series(partners_x, dtype=object).map(species_of).dropna()
+        counts_x = sx.value_counts()
 
-    pd.testing.assert_frame_equal(entropies, expected)
+        # Partners seen as uid_y (look at uid_x), unique and not self
+        partners_y = pd.unique(contacts.loc[contacts["uid_y"] == uid, "uid_x"])
+        partners_y = [p for p in partners_y if p != uid]
+        sy = pd.Series(partners_y, dtype=object).map(species_of).dropna()
+        counts_y = sy.value_counts()
+
+        all_counts = counts_x.add(counts_y, fill_value=0)
+        total = int(all_counts.sum())
+        if total == 0:
+            entropy = 0.0
+        else:
+            p = all_counts / total
+            entropy = float(-(p * np.log2(p)).sum())
+        rows.append((uid, entropy))
+    return (
+        pd.DataFrame(rows, columns=["uid", "entropy"])
+        .sort_values("uid")
+        .reset_index(drop=True)
+    )
 
 
-# def test_get_location_entropies():
-#     data = pd.read_csv("data/trajectories.csv")
-#     species_map = pd.read_csv("data/species.csv")
-#     expected = pd.read_csv("data/entropies_by_location.csv")
-#     entropies = get_location_entropies(data, species_map)
-
-#     pd.testing.assert_frame_equal(entropies, expected)
-
-
-# @pytest.mark.parametrize("data, expected", entropy_data)
-# def test_get_entropies(data: pd.DataFrame, expected: pd.Series):
-#     """
-#     Test the `get_entropies()` method.
-
-#     Parameters
-#     ----------
-#     data : pd.DataFrame
-#         A DataFrame of co-location instances.
-#     expected : pd.Series
-#         A Series of co-location instance entropies.
-
-#     """
-#     entropies = get_entropies(data)
-#     pd.testing.assert_series_equal(entropies, expected)
+def test_get_individual_entropies_matches_reference():
+    got = (
+        get_individual_entropies(CONTACTS, SPECIES_MAP)
+        .sort_values("uid")
+        .reset_index(drop=True)
+    )
+    ref = _reference_individual_entropies(CONTACTS, SPECIES_MAP)
+    pd.testing.assert_frame_equal(got, ref)
 
 
 @pytest.mark.parametrize(
@@ -179,23 +223,101 @@ def test_get_average_entropy_no_mutation(case_name):
     df = make_df(CASES[case_name])
     df_before = df.copy(deep=True)
     _ = get_average_entropy(df)
-    # No extra columns, same data
     assert list(df.columns) == list(df_before.columns)
     assert df.equals(df_before)
 
 
-@pytest.mark.parametrize("data, expected", mutual_information_data)
+@pytest.mark.parametrize("data, expected", MUTUAL_INFORMATION_DATA)
 def test_get_mutual_information(data: pd.DataFrame, expected: float):
-    """
-    Test the `get_mutual_information()` method.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        A DataFrame of co-location instances.
-    expected : float
-        The expected average entropy.
-
-    """
     actual = get_mutual_information(data)
     assert actual == expected
+
+
+def test_entropies_location_default_location_col():
+    out = get_entropies(LOCATIONS, species_map=SPECIES_MAP, how="location")
+    assert set(out.columns) == {"locationID", "entropy"}
+    assert np.isfinite(out["entropy"]).all()
+    assert (out["entropy"] >= 0).all()
+
+
+def test_entropies_location_custom_location_col():
+    df = LOCATIONS.rename(columns={"locationID": "LSOA"})
+    out = get_entropies(
+        df, species_map=SPECIES_MAP, how="location", location_col="LSOA"
+    )
+    assert set(out.columns) == {"LSOA", "entropy"}
+    assert np.isfinite(out["entropy"]).all()
+
+
+def test_entropies_individual_path():
+    out = get_entropies(
+        CONTACTS[["uid_x", "uid_y"]], species_map=SPECIES_MAP, how="individual"
+    )
+    assert set(out.columns) == {"uid", "entropy"}
+    assert out["uid"].is_unique
+
+
+def test_entropies_missing_species_map_raises():
+    with pytest.raises(Exception):
+        # type: ignore[arg-type]
+        _ = get_entropies(
+            CONTACTS[["uid_x", "uid_y"]], species_map=None, how="individual"
+        )
+
+
+def test_entropies_missing_required_columns_raises():
+    with pytest.raises(Exception):
+        _ = get_entropies(
+            LOCATIONS.drop(columns=["uid"]), species_map=SPECIES_MAP, how="location"
+        )
+
+
+def test_marginal_distributions_sum_to_one():
+    px, py = __get_marginal_distribution(SPECIES_ONLY)
+    assert np.isclose(px.sum(), 1.0)
+    assert np.isclose(py.sum(), 1.0)
+    assert px.dtype == float and py.dtype == float
+
+
+def test_marginal_empty_input_returns_empty_series():
+    px, py = __get_marginal_distribution(SPECIES_ONLY.iloc[0:0])
+    assert px.empty and py.empty
+    assert px.dtype == float and py.dtype == float
+
+
+VALID_CONTACTS = pd.DataFrame(
+    {
+        "uid_x": ["u1", "u2"],
+        "uid_y": ["u2", "u3"],
+        "species_x": ["cat", "dog"],
+        "species_y": ["dog", "fox"],
+    }
+)
+
+MISSING_CONTACT_CASES = {
+    "no_uid_x": VALID_CONTACTS.drop(columns=["uid_x"]),
+    "no_uid_y": VALID_CONTACTS.drop(columns=["uid_y"]),
+    "no_species_x": VALID_CONTACTS.drop(columns=["species_x"]),
+    "no_species_y": VALID_CONTACTS.drop(columns=["species_y"]),
+}
+
+
+@pytest.mark.parametrize(
+    "bad", list(MISSING_CONTACT_CASES.values()), ids=list(MISSING_CONTACT_CASES.keys())
+)
+def test_interaction_network_requires_uid_and_species(bad):
+    with pytest.raises(Exception):
+        get_interaction_network(bad)
+
+
+def test_interaction_network_builds_from_valid():
+    g = get_interaction_network(VALID_CONTACTS)
+    assert g.number_of_nodes() >= 1
+    assert g.number_of_edges() >= 1
+
+
+def test_species_network_symmetry_and_no_self_loops():
+    g = get_species_interaction_network(SPECIES_NET_INPUT)
+    w_cd = g.get_edge_data("cat", "dog")["weight"]
+    assert w_cd == 2
+    assert not any(u == v for u, v in g.edges())
