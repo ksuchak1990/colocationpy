@@ -3,10 +3,35 @@ A collection of measurements that we may wish to take when considering
 instances of co-location.
 """
 
+from __future__ import annotations
+
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pandera as pa
+from pandera import Check, Column, DataFrameSchema
+
+# Core schema for contact-level rows used across metrics.
+CONTACTS_SCHEMA = DataFrameSchema(
+    {
+        # or pa.String if you’ve normalised to str
+        "uid_x": Column(object),
+        "uid_y": Column(object),
+        "species_x": Column(object),
+        "species_y": Column(object),
+    },
+    strict=False,  # allow extra columns; we only assert what we actually need
+)
+
+# When functions rely on a precomputed weight or count per (uid_x, uid_y) edge:
+EDGE_WEIGHTS_SCHEMA = DataFrameSchema(
+    {
+        "uid_x": Column(object),
+        "uid_y": Column(object),
+        "weight": Column(float, checks=Check.ge(0.0)),
+    },
+    strict=False,
+)
 
 
 def __get_shannon_entropy(proportions: list[float]) -> float:
@@ -143,9 +168,9 @@ def get_entropies(data: pd.DataFrame, how: str = "location") -> pd.Series:
         },
     }
 
-    assert how in entropy_approaches, (
-        f'"how" must be one of {list(entropy_approaches.keys())}'
-    )
+    assert (
+        how in entropy_approaches
+    ), f'"how" must be one of {list(entropy_approaches.keys())}'
 
     required_columns = entropy_approaches[how]["required_columns"]
     schema = pa.DataFrameSchema({rc: pa.Column() for rc in required_columns})
