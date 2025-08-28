@@ -1,8 +1,23 @@
 # Imports
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 import pandera as pa
 from scipy.optimize import minimize
+
+
+@dataclass(frozen=True)
+class AffineFit:
+    """
+    Result of an affine fit y ≈ A x + b (2D).
+    """
+
+    A: np.ndarray  # (2, 2)
+    b: np.ndarray  # (2,)
+    rms_error: float
+    success: bool
+    message: str
 
 
 # Functions
@@ -130,3 +145,101 @@ def apply_time_transform_df(
     else:
         out[out_col] = datetimes
     return out
+
+
+def _ols_affine(
+    src: np.ndarray, dst: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """
+    Closed-form least-squares initialiser for y ≈ A x + b.
+    Returns (A, b, rms_error).
+    """
+    n = src.shape[0]
+    X = np.hstack([src, np.ones((n, 1))])  # [x, y, 1]
+    theta, *_ = np.linalg.lstsq(X, dst, rcond=None)  # (3, 2)
+    A = theta[:2, :].T  # (2, 2)
+    b = theta[2, :]  # (2,)
+    resid = dst - (src @ A.T + b)
+    rms = float(np.sqrt(np.mean(np.sum(resid * resid, axis=1))))
+    return A, b, rms
+
+
+def _unpack_affine(theta: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Map flat parameter vector -> (A, b).
+    """
+    A = theta[:4].reshape(2, 2)
+    b = theta[4:]
+    return A, b
+
+
+def _affine_objective(theta: np.ndarray, src: np.ndarray, dst: np.ndarray) -> float:
+    """
+    Mean squared error objective for y ≈ A x + b.
+    """
+    A, b = _unpack_affine(theta)
+    pred = src @ A.T + b
+    err = pred - dst
+    return float(np.mean(np.sum(err * err, axis=1)))
+
+
+def fit_affine_transform(
+    src: np.ndarray,
+    dst: np.ndarray,
+    *,
+    maxiter: int = 1000,
+    tol: float = 1e-8,
+) -> AffineFit:
+    """
+    Fit an affine transform y ≈ A x + b mapping 2D points src→dst, using SciPy.
+
+    Parameters
+    ----------
+    src, dst : numpy.ndarray
+        Arrays of shape (N, 2), N ≥ 2, same shape, no NaNs.
+    maxiter : int, default 1000
+        Maximum iterations for the optimiser.
+    tol : float, default 1e-8
+        Convergence tolerance for the optimiser.
+
+    Returns
+    -------
+    AffineFit
+        Dataclass containing A, b, RMS error, success flag, and message.
+
+    Raises
+    ------
+    ValueError
+        If shapes are invalid or inputs contain NaNs.
+    """
+    src = np.asarray(src, dtype=float)
+    dst = np.asarray(dst, dtype=float)
+
+    if src.ndim != 2 or dst.ndim != 2 or src.shape != dst.shape or src.shape[1] != 2:
+        raise ValueError("src and dst must be the same shape (N, 2).")
+    if np.isnan(src).any() or np.isnan(dst).any():
+        raise ValueError("NaNs in src/dst are not supported.")
+    if src.shape[0] < 2:
+        raise ValueError("At least two point pairs are required.")
+
+    # Initialise with OLS (good numerical starting point)
+    A0, b0, _ = _ols_affine(src, dst)
+    theta0 = np.hstack([A0.ravel(), b0])
+
+    res = minimize(
+        _affine_objective,
+        theta0,
+        args=(src, dst),
+        method="BFGS",
+        options={"gtol": tol, "maxiter": maxiter},
+    )
+
+    A_opt, b_opt = _unpack_affine(res.x)
+    rms = float(np.sqrt(res.fun))
+    return AffineFit(
+        A=A_opt,
+        b=b_opt,
+        rms_error=rms,
+        success=bool(res.success),
+        message=str(res.message),
+    )
