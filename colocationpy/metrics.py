@@ -354,41 +354,55 @@ def __get_marginal_distribution(data: pd.DataFrame) -> tuple[pd.Series, pd.Serie
 
 def get_mutual_information(data: pd.DataFrame) -> float:
     """
-    Calculate the mutual information between species_x and species_y in a vectorized way.
+    Compute mutual information I(species_x; species_y) in bits.
 
     Parameters
     ----------
-    data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+    data : pandas.DataFrame
+        Records with required columns "species_x", "species_y".
+        Values are coerced to object dtype (integer labels are accepted).
 
     Returns
     -------
     float
-        The mutual information between species_x and species_y.
+        Mutual information in bits (base 2). Returns 0.0 for empty input.
+
+    Raises
+    ------
+    pandera.errors.SchemaError
+        If required columns are missing.
     """
-    # Get the joint and marginal probabilities
-    joint_prob = __get_joint_distribution(data)
-    species_x_prob, species_y_prob = __get_marginal_distribution(data)
+    # Validate and coerce dtypes (accept ints)
+    schema = pa.DataFrameSchema(
+        {
+            "species_x": pa.Column(object, coerce=True),
+            "species_y": pa.Column(object, coerce=True),
+        },
+        strict=False,
+    )
+    data = schema.validate(data, lazy=False)
 
-    # Align the marginal probabilities with the joint distribution's index and columns
-    p_x = species_x_prob.reindex(joint_prob.index).values[
-        :, None
-    ]  # Shape (n_species_x, 1)
-    p_y = species_y_prob.reindex(joint_prob.columns).values[
-        None, :
-    ]  # Shape (1, n_species_y)
+    n = len(data)
+    if n == 0:
+        return 0.0
 
-    # Convert the joint probability DataFrame into a NumPy array
-    p_xy = joint_prob.values  # Shape (n_species_x, n_species_y)
+    # Joint distribution P(X,Y)
+    joint = pd.crosstab(data["species_x"], data["species_y"], normalize=True)
 
-    # Calculate the mutual information using vectorized operations
+    # Marginals P(X), P(Y)
+    px = joint.sum(axis=1)
+    py = joint.sum(axis=0)
+
+    # Vectorised MI: sum_{x,y} pxy * log2(pxy / (px * py)), with mask for zeros
+    pxy = joint.to_numpy()
+    pxv = px.to_numpy()[:, None]
+    pyv = py.to_numpy()[None, :]
+
     with np.errstate(divide="ignore", invalid="ignore"):
-        ratio = np.where(p_xy > 0, p_xy / (p_x * p_y), 0)  # Avoid divide by zero
-        mutual_info_matrix = np.where(p_xy > 0, p_xy * np.log2(ratio), 0)
+        ratio = np.where(pxy > 0, pxy / (pxv * pyv), 1.0)  # 1.0 so log2=0 where pxy==0
+        terms = np.where(pxy > 0, pxy * np.log2(ratio), 0.0)
 
-    mutual_info = np.sum(mutual_info_matrix)
-
-    return mutual_info
+    return float(terms.sum())
 
 
 def get_species_interaction_network(
