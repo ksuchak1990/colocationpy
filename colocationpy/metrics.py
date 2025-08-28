@@ -391,20 +391,89 @@ def get_mutual_information(data: pd.DataFrame) -> float:
     return mutual_info
 
 
-def get_species_interaction_network(data: pd.DataFrame) -> nx.Graph:
-    DataFrameSchema(
-        {"species_x": Column(object), "species_y": Column(object)}, strict=False
+def get_species_interaction_network(
+    data: pd.DataFrame,
+    *,
+    normalise: str | None = None,
+) -> nx.Graph:
+    """
+    Build an undirected species–species co-occurrence network.
+
+    Edge weight between two species is the symmetric co-occurrence count:
+    count(species_x→species_y) + count(species_y→species_x). Self-loops are removed.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Pairwise contact records with required columns "species_x", "species_y".
+        Extra columns are permitted and ignored.
+    normalise : {"sum", "jaccard", None}, optional
+        If provided, convert integer counts to:
+        - "sum": divide by the total number of contacts (global normalisation).
+        - "jaccard": Jaccard coefficient based on co-occurrence over the union of
+          appearances per species (values in [0, 1]).
+        None (default) returns raw integer counts.
+
+    Returns
+    -------
+    networkx.Graph
+        Undirected graph of species. Edge attribute "weight" holds the count
+        or the normalised value.
+
+    Raises
+    ------
+    pandera.errors.SchemaError
+        If required columns are missing.
+    ValueError
+        If `normalise` is not one of {None, "sum", "jaccard"}.
+    """
+    # Validate required columns; coerce allows int labels etc.
+    pa.DataFrameSchema(
+        {
+            "species_x": pa.Column(object, coerce=True),
+            "species_y": pa.Column(object, coerce=True),
+        },
+        strict=False,
     ).validate(data, lazy=False)
 
+    if data.empty:
+        return nx.Graph()
+
+    # Symmetric co-occurrence counts
     ctab = pd.crosstab(data["species_x"], data["species_y"])
-    adjacency = (ctab + ctab.T).fillna(0)
-    np.fill_diagonal(adjacency.values, 0)
-    graph = nx.from_pandas_adjacency(adjacency)
+    adj = (ctab + ctab.T).fillna(0).astype(int)
+    np.fill_diagonal(adj.values, 0)  # no self-loops by construction
 
-    # Ensure no self-loops remain
-    graph.remove_edges_from(nx.selfloop_edges(graph))
+    if normalise is None:
+        g = nx.from_pandas_adjacency(adj)
+    elif normalise == "sum":
+        total = int(adj.values.sum())
+        weights = adj.astype(float) / total if total > 0 else adj.astype(float)
+        g = nx.from_pandas_adjacency(weights)
+    elif normalise == "jaccard":
+        appearances = (
+            pd.concat([data["species_x"], data["species_y"]], ignore_index=True)
+            .value_counts()
+            .reindex(adj.index)
+            .fillna(0)
+            .astype(int)
+        )
 
-    return graph
+        num = adj.astype(float)
+        den = appearances.values[:, None] + appearances.values[None, :] - num.values
+
+        with np.errstate(divide="ignore", invalid="ignore"):
+            jacc = np.where(den > 0, num / den, 0.0)
+
+        jacc = pd.DataFrame(jacc, index=adj.index, columns=adj.columns)  # noqa: E999
+        np.fill_diagonal(jacc.values, 0.0)
+        g = nx.from_pandas_adjacency(jacc)
+    else:
+        raise ValueError("normalise must be one of {None, 'sum', 'jaccard'}.")
+
+    # Defensive: ensure no self-loops remain
+    g.remove_edges_from(nx.selfloop_edges(g))
+    return g
 
 
 def get_interaction_network(data: pd.DataFrame) -> nx.Graph:

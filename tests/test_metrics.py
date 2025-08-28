@@ -134,6 +134,23 @@ INDIVIDUAL_ENTROPIES_DATA = [
     )
 ]
 
+DF_COUNTS = pd.DataFrame(
+    {
+        # cat→dog (1), cat→cat (2), dog→cat (1), dog→fox (1)
+        "species_x": ["cat", "cat", "cat", "dog", "dog"],
+        "species_y": ["dog", "cat", "cat", "cat", "fox"],
+    }
+)
+
+DF_EMPTY = pd.DataFrame({"species_x": [], "species_y": []})
+
+DF_INTS = pd.DataFrame(
+    {
+        "species_x": [1, 1, 2, 2, 3],
+        "species_y": [2, 1, 1, 3, 3],
+    }
+)
+
 
 def make_df(pairs):
     return pd.DataFrame(pairs, columns=["species_x", "species_y"])
@@ -321,3 +338,45 @@ def test_species_network_symmetry_and_no_self_loops():
     w_cd = g.get_edge_data("cat", "dog")["weight"]
     assert w_cd == 2
     assert not any(u == v for u, v in g.edges())
+
+
+def test_default_counts_and_no_self_loops():
+    g = get_species_interaction_network(DF_COUNTS)
+    # Symmetric counts: cat–dog = cat→dog(1) + dog→cat(1) = 2
+    assert g.get_edge_data("cat", "dog")["weight"] == 2
+    # cat–fox: only dog→fox appears; no cat–fox
+    assert ("cat", "fox") not in g.edges() and ("fox", "cat") not in g.edges()
+    # No self-loops
+    assert not any(u == v for u, v in g.edges())
+
+
+def test_empty_input_returns_empty_graph():
+    g = get_species_interaction_network(DF_EMPTY)
+    assert g.number_of_nodes() == 0
+    assert g.number_of_edges() == 0
+
+
+def test_integer_species_labels_are_accepted_via_coercion():
+    g = get_species_interaction_network(DF_INTS)
+    # Edge exists between "1" and "2" after coercion to object/str
+    # depending on your coercion to object/str
+    assert g.has_edge("1", "2") or g.has_edge(1, 2)
+
+
+@pytest.mark.parametrize("mode", ["sum", "jaccard"])
+def test_normalisation_modes_in_unit_interval(mode):
+    g = get_species_interaction_network(DF_COUNTS, normalise=mode)
+    # All weights in [0, 1]
+    weights = [data["weight"] for _, _, data in g.edges(data=True)]
+    assert weights, "Graph should have at least one edge"
+    assert all(0.0 <= w <= 1.0 for w in weights)
+    assert (
+        np.isfinite(weights).all()
+        if hasattr(weights, "all")
+        else all(np.isfinite(w) for w in weights)
+    )
+
+
+def test_normalise_invalid_value_raises():
+    with pytest.raises(ValueError):
+        _ = get_species_interaction_network(DF_COUNTS, normalise="bogus")
