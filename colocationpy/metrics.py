@@ -3,10 +3,35 @@ A collection of measurements that we may wish to take when considering
 instances of co-location.
 """
 
+from __future__ import annotations
+
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pandera as pa
+from pandera import Check, Column, DataFrameSchema
+
+# Core schema for contact-level rows used across metrics.
+CONTACTS_SCHEMA = DataFrameSchema(
+    {
+        # or pa.String if you’ve normalised to str
+        "uid_x": Column(object),
+        "uid_y": Column(object),
+        "species_x": Column(object),
+        "species_y": Column(object),
+    },
+    strict=False,  # allow extra columns; we only assert what we actually need
+)
+
+# When functions rely on a precomputed weight or count per (uid_x, uid_y) edge:
+EDGE_WEIGHTS_SCHEMA = DataFrameSchema(
+    {
+        "uid_x": Column(object),
+        "uid_y": Column(object),
+        "weight": Column(float, checks=Check.ge(0.0)),
+    },
+    strict=False,
+)
 
 
 def __get_shannon_entropy(proportions: list[float]) -> float:
@@ -65,8 +90,12 @@ def get_individual_entropies(
 ) -> pd.DataFrame:
     # required_columns = ["uid_x", "uid_y", "species_x", "species_y", "coloc_prob"]
     # check_for_required_columns(data, required_columns)
-    schema = pa.DataFrameSchema({"uid_x": pa.Column(), "uid_y": pa.Column()})
-    schema.validate(data)
+    DataFrameSchema(
+        {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
+    ).validate(data, lazy=False)
+    DataFrameSchema(
+        {"uid": Column(object), "species": Column(object)}, strict=False
+    ).validate(species_map, lazy=False)
 
     ids_x = set(data["uid_x"].unique())
     ids_y = set(data["uid_y"].unique())
@@ -87,9 +116,13 @@ def get_individual_entropies(
         counts_y = __get_counts(data, species_map, "uid_y", "uid_x", i)
 
         all_counts = counts_x.add(counts_y, fill_value=0)
-        proportions = all_counts / all_counts.sum()
+        total = int(all_counts.sum())
+        if total == 0:
+            entropy = 0.0
+        else:
+            proportions = all_counts / total
+            entropy = __get_shannon_entropy(proportions)
 
-        entropy = __get_shannon_entropy(proportions)
         d = {"uid": i, "entropy": entropy}
 
         entropies.append(d)
@@ -99,7 +132,7 @@ def get_individual_entropies(
 
 
 def get_location_entropies(
-    data: pd.DataFrame, species_map: pd.DataFrame, location_col: str = "LSOA21CD"
+    data: pd.DataFrame, species_map: pd.DataFrame, location_col: str = "locationID"
 ) -> pd.DataFrame:
     # required_columns = [location_col, "uid", "species"]
     # check_for_required_columns(data, required_columns)
@@ -115,8 +148,10 @@ def get_location_entropies(
             left=individuals_at_location, right=species_map, on="uid", how="left"
         )
         counts = individuals_at_location["species"].value_counts()
-        proportions = counts / counts.sum()
-        entropy = __get_shannon_entropy(proportions)
+
+        total = int(counts.sum())
+        entropy = 0.0 if total == 0 else __get_shannon_entropy(counts / total)
+
         d = {location_col: location, "entropy": entropy}
         entropies.append(d)
 
@@ -125,35 +160,62 @@ def get_location_entropies(
     return entropies
 
 
-def get_entropies(data: pd.DataFrame, how: str = "location") -> pd.Series:
-    entropy_approaches = {
-        "individual": {
-            "required_columns": [
-                "uid_x",
-                "uid_y",
-                "species_x",
-                "species_y",
-                "coloc_prob",
-            ],
-            "method": get_individual_entropies,
-        },
-        "location": {
-            "required_columns": ["locationID", "uid", "species"],
-            "method": get_location_entropies,
-        },
-    }
+def get_entropies(
+    data: pd.DataFrame,
+    *,
+    species_map: pd.DataFrame,
+    how: str = "location",
+    location_col: str = "locationID",
+) -> pd.DataFrame:
+    """
+    Compute Shannon entropies using a chosen aggregation strategy.
 
-    assert how in entropy_approaches, (
-        f'"how" must be one of {list(entropy_approaches.keys())}'
-    )
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Input table.
+        When ``how == "individual"``, requires columns ``"uid_x"``, ``"uid_y"``.
+        When ``how == "location"``, requires columns ``location_col`` and ``"uid"``.
+    species_map : pandas.DataFrame
+        Mapping of individuals to species with columns ``"uid"`` and ``"species"``.
+    how : {"location", "individual"}, default "location"
+        Aggregation strategy:
+        - ``"location"``: entropy of species mix per location.
+        - ``"individual"``: entropy of species mix across each individual's contacts.
+    location_col : str, default "locationID"
+        Column in ``data`` naming the location identifier (used when ``how == "location"``).
 
-    required_columns = entropy_approaches[how]["required_columns"]
-    schema = pa.DataFrameSchema({rc: pa.Column() for rc in required_columns})
-    schema.validate(data)
-    # check_for_required_columns(data, entropy_approaches[how]["required_columns"])
-    entropies = entropy_approaches[how]["method"](data)
+    Returns
+    -------
+    pandas.DataFrame
+        If ``how == "location"``, columns ``[location_col, "entropy"]``.
+        If ``how == "individual"``, columns ``["uid", "entropy"]``.
 
-    return entropies
+    Raises
+    ------
+    ValueError
+        If ``how`` is not one of the supported options.
+    pandera.errors.SchemaError
+        If required columns are missing from ``data`` or ``species_map``.
+    """
+    # Validate species_map once
+    DataFrameSchema(
+        {"uid": Column(object), "species": Column(object)}, strict=False
+    ).validate(species_map, lazy=False)
+
+    if how == "individual":
+        DataFrameSchema(
+            {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
+        ).validate(data, lazy=False)
+        return get_individual_entropies(data, species_map)
+
+    if how == "location":
+        DataFrameSchema(
+            {location_col: Column(object), "uid": Column(object)}, strict=False
+        ).validate(data, lazy=False)
+        return get_location_entropies(data, species_map, location_col=location_col)
+
+    raise ValueError("Unsupported value for 'how'. Use 'location' or 'individual'.")
 
 
 # def get_entropies(data: pd.DataFrame) -> pd.Series:
@@ -206,8 +268,9 @@ def get_average_entropy(data: pd.DataFrame) -> float:
 
     pair_counts = pairs.value_counts()
 
-    total_interactions = pair_counts.sum()
-
+    total_interactions = int(pair_counts.sum())
+    if total_interactions == 0:
+        return 0.0
     probabilities = pair_counts / total_interactions
 
     entropy = -np.sum(probabilities * np.log2(probabilities))
@@ -230,8 +293,10 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         A DataFrame containing the joint probabilities of species_x and species_y.
     """
-    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
-    schema.validate(data)
+    SPECIES_ONLY_SCHEMA = DataFrameSchema(
+        {"species_x": Column(object), "species_y": Column(object)}, strict=False
+    )
+    SPECIES_ONLY_SCHEMA.validate(data, lazy=False)
 
     # Calculate joint frequencies (counts)
     joint_freq = pd.crosstab(data["species_x"], data["species_y"])
@@ -243,30 +308,48 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
     return joint_prob
 
 
-def __get_marginal_distribution(data: pd.DataFrame) -> pd.Series:
+def __get_marginal_distribution(data: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """
-    Calculate the marginal probability distribution for species_x and species_y.
+    Calculate the marginal probability distributions for ``species_x`` and ``species_y``.
 
     Parameters
     ----------
-    data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+    data : pandas.DataFrame
+        Co-location records with required columns ``"species_x"`` and ``"species_y"``.
+        Extra columns are permitted and ignored.
 
     Returns
     -------
-    pd.Series
-        A Series containing marginal probabilities for each species.
+    tuple of pandas.Series
+        ``(p_x, p_y)``, where:
+        - ``p_x`` is the marginal distribution over ``species_x`` (index: species label).
+        - ``p_y`` is the marginal distribution over ``species_y`` (index: species label).
+        Probabilities sum to 1.0 along each Series. Empty input returns empty Series.
+
+    Raises
+    ------
+    pandera.errors.SchemaError
+        If required columns are missing.
     """
-    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
-    schema.validate(data)
+    DataFrameSchema(
+        {"species_x": Column(object), "species_y": Column(object)},
+        strict=False,
+    ).validate(data, lazy=False)
 
-    # Marginal probabilities for species_x
-    species_x_prob = data["species_x"].value_counts(normalize=True)
+    n = len(data)
+    if n == 0:
+        return pd.Series(dtype=float), pd.Series(dtype=float)
 
-    # Marginal probabilities for species_y
-    species_y_prob = data["species_y"].value_counts(normalize=True)
+    p_x = data["species_x"].value_counts().sort_index() / n
+    p_y = data["species_y"].value_counts().sort_index() / n
 
-    return species_x_prob, species_y_prob
+    # Ensure float dtype and stable names (optional but tidy)
+    p_x = p_x.astype(float)
+    p_y = p_y.astype(float)
+    p_x.name = "P(species_x)"
+    p_y.name = "P(species_y)"
+
+    return p_x, p_y
 
 
 def get_mutual_information(data: pd.DataFrame) -> float:
@@ -309,35 +392,38 @@ def get_mutual_information(data: pd.DataFrame) -> float:
 
 
 def get_species_interaction_network(data: pd.DataFrame) -> nx.Graph:
-    schema = pa.DataFrameSchema({"species_x": pa.Column(), "species_y": pa.Column()})
-    schema.validate(data)
+    DataFrameSchema(
+        {"species_x": Column(object), "species_y": Column(object)}, strict=False
+    ).validate(data, lazy=False)
 
-    adjacency_matrix = pd.crosstab(data["species_x"], data["species_y"])
-    graph = nx.from_pandas_adjacency(adjacency_matrix)
+    ctab = pd.crosstab(data["species_x"], data["species_y"])
+    adjacency = (ctab + ctab.T).fillna(0)
+    np.fill_diagonal(adjacency.values, 0)
+    graph = nx.from_pandas_adjacency(adjacency)
+
+    # Ensure no self-loops remain
+    graph.remove_edges_from(nx.selfloop_edges(graph))
+
     return graph
 
 
 def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
     """
-    Creates an undirected graph from a pandas DataFrame containing individual
-    interaction data. Each individual is represented as a node, and interactions
-    between individuals are represented as edges. Species information is added
-    as node attributes.
+    Build an undirected individual–individual interaction network.
 
     Parameters
     ----------
-    data : pd.DataFrame
-        A DataFrame containing individual interaction data with columns 'id_x',
-        'id_y', 'species_x', and 'species_y'.
+    data : pandas.DataFrame
+        Contact rows with required columns:
+        ``"uid_x"``, ``"uid_y"``, ``"species_x"``, ``"species_y"``.
 
     Returns
     -------
-    G : nx.Graph
-        A NetworkX graph representing the interaction network between
-        individuals, with species as node attributes.
+    networkx.Graph
+        Undirected graph with individuals as nodes. Each node has a
+        ``"species"`` attribute.
     """
-    schema = pa.DataFrameSchema({"uid_x": pa.Column(), "uid_y": pa.Column()})
-    schema.validate(data)
+    CONTACTS_SCHEMA.validate(data, lazy=False)
 
     # Initialize an undirected graph
     graph = nx.Graph()
