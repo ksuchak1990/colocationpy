@@ -375,38 +375,45 @@ def get_mahalanobis_distance(
     y_uncertainty2: float,
 ) -> float:
     """
-    Calculate the Mahalanobis distance between two coordinate locations which
-    are observed with some degree of uncertainty around them. This works on the
-    assumption that uncertainty around the observation is normally distributed,
-    with the provided locations representing the means of the two 2-d gaussian
-    distributions. Furthermore, we assume that the uncertainty is uncorrelated,
-    i.e. there is no x-y correlation, resulting in covariance matrices that are
-    diagonal.
+    Mahalanobis-like distance between two 2D points using axis-aligned covariances.
 
     Parameters
     ----------
-    location1 : Coordinate
-        (x, y) location of the first observation.
-    location2 : Coordinate
-        (x, y) location of the second observation.
-    x_uncertainty1 : float
-        x-uncertainty of the first observation.
-    x_uncertainty2 : float
-        x-uncertainty of the second observation.
-    y_uncertainty1 : float
-        y-uncertainty of the first observation.
-    y_uncertainty2 : float
-        y-uncertainty of the second observation.
+    location1, location2
+        (x, y) coordinates.
+    x_uncertainty1, x_uncertainty2
+        X-axis **variances** (σ²) for location1 and location2 (non-negative).
+    y_uncertainty1, y_uncertainty2
+        Y-axis **variances** (σ²) for location1 and location2 (non-negative).
 
     Returns
     -------
     float
-        The Mahalanobis distance between the two locations.
+        √( dx² / (σ²x1 + σ²x2) + dy² / (σ²y1 + σ²y2) ).
 
+    Notes
+    -----
+    - “Uncertainty” here explicitly means **variance (σ²)**, not standard deviation.
+    - If either combined variance in an axis is zero and the corresponding offset is non-zero,
+      the distance is infinite; if both offsets are zero, the distance is zero.
     """
-    x_measure = (location1[0] - location2[0]) ** 2 / (x_uncertainty1 + x_uncertainty2)
-    y_measure = (location1[0] - location2[1]) ** 2 / (y_uncertainty1 + y_uncertainty2)
-    return np.sqrt(x_measure + y_measure)
+    if min(x_uncertainty1, x_uncertainty2, y_uncertainty1, y_uncertainty2) < 0:
+        raise ValueError("Uncertainties must be non-negative variances (σ²).")
+    dx = location1[0] - location2[0]
+    dy = location1[1] - location2[1]
+
+    denom_x = x_uncertainty1 + x_uncertainty2
+    denom_y = y_uncertainty1 + y_uncertainty2
+
+    # Degenerate handling to avoid ZeroDivisionError and define sensible limits
+    if denom_x == 0.0 and denom_y == 0.0:
+        return 0.0 if (dx == 0.0 and dy == 0.0) else float("inf")
+    if denom_x == 0.0:
+        return float("inf") if dx != 0.0 else float(np.sqrt(dy * dy / denom_y))
+    if denom_y == 0.0:
+        return float("inf") if dy != 0.0 else float(np.sqrt(dx * dx / denom_x))
+
+    return float(np.sqrt(dx * dx / denom_x + dy * dy / denom_y))
 
 
 def get_co_location_probability(df: pd.DataFrame) -> pd.Series:

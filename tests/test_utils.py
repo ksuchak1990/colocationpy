@@ -3,15 +3,18 @@ Test functions in `colocation.utils`
 """
 
 # Imports
-import pytest
+import math
+
+import numpy as np
 import pandas as pd
-from shapely.geometry import LineString, Point, Polygon, MultiPolygon
+import pytest
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 
 from colocationpy.utils import (
     get_closest_corner,
+    get_discrete_proximity,
     get_distance_around_barrier,
     get_mahalanobis_distance,
-    get_discrete_proximity,
     is_divided_by_barrier,
 )
 
@@ -101,10 +104,31 @@ barrier_distance_data = [
     ((0, 5), (10, 5), Polygon([(4, 2), (6, 2), (6, 9), (4, 9), (4, 2)]), 12),
 ]
 
-mahalanobis_data = [
-    ((0, 0), (1, 0), 1, 1, 1, 1, 0.5**0.5),
-    ((0, 0), (1, 0), 0.5, 0.5, 0.5, 0.5, 1),
+P = {
+    "O": (0.0, 0.0),
+    "A": (1.0, 2.0),
+    "B": (3.0, 4.0),
+    "C": (2.0, 1.0),
+    "D": (2.0, -1.0),
+    "E": (-5.0, 3.0),
+}
+
+V = {
+    "ones": (1.0, 1.0),
+    "zeros": (0.0, 0.0),
+    "x23": (2.0, 3.0),
+    "y45": (4.0, 5.0),
+    "x15": (1.5, 0.5),
+    "y2535": (2.5, 3.5),
+    "twos": (2.0, 2.0),
+}
+
+NEG_VARS = [
+    ((-1.0, 1.0), (1.0, 1.0)),
+    ((1.0, 1.0), (-0.1, 0.0)),
+    ((-0.5, -0.1), (0.0, 0.0)),
 ]
+
 
 discrete_proximity_data = [
     (pd.DataFrame({"distance": [1, 2, 3]}), 2, pd.Series([True, True, False])),
@@ -118,9 +142,13 @@ discrete_proximity_data = [
 ]
 
 
+def expected_mahalanobis(a, b, vx, vy):
+    dx = a[0] - b[0]
+    dy = a[1] - b[1]
+    return math.sqrt(dx * dx / (vx[0] + vx[1]) + dy * dy / (vy[0] + vy[1]))
+
+
 # Tests
-
-
 @pytest.mark.parametrize("df, tolerance, expected", discrete_proximity_data)
 def test_discrete_proximity(df, tolerance, expected):
     result = get_discrete_proximity(df, tolerance)
@@ -150,8 +178,82 @@ def test_barrier_distance(location1, location2, barrier, expected):
 
 
 @pytest.mark.parametrize(
-    "loc1, loc2, x_unc1, x_unc2, y_unc1, y_unc2, expected", mahalanobis_data
+    "a,b,vx,vy,expected",
+    [
+        (
+            P["A"],
+            P["O"],
+            V["ones"],
+            V["ones"],
+            math.sqrt(2.5),
+        ),  # regression: y-index mix-up
+        (
+            P["O"],
+            P["B"],
+            V["ones"],
+            V["ones"],
+            5 / math.sqrt(2),
+        ),  # 3-4-5 with unit variances
+        (P["O"], P["C"], V["x23"], V["y45"], None),  # numeric non-symmetric
+    ],
 )
-def test_get_mahalanobis_distance(loc1, loc2, x_unc1, x_unc2, y_unc1, y_unc2, expected):
-    distance = get_mahalanobis_distance(loc1, loc2, x_unc1, x_unc2, y_unc1, y_unc2)
-    assert distance == expected
+def test_mahalanobis_expected_values(a, b, vx, vy, expected):
+    d = get_mahalanobis_distance(a, b, vx[0], vx[1], vy[0], vy[1])
+    if expected is None:
+        assert np.isclose(d, expected_mahalanobis(a, b, vx, vy))
+    else:
+        assert np.isclose(d, expected)
+
+
+@pytest.mark.parametrize(
+    "a,b,vx,vy",
+    [
+        (
+            P["A"],
+            P["O"],
+            V["zeros"],
+            V["ones"],
+        ),  # zero combined x variance, non-zero dx
+        (
+            P["O"],
+            P["A"],
+            V["ones"],
+            V["zeros"],
+        ),  # zero combined y variance, non-zero dy
+    ],
+)
+def test_mahalanobis_infinite_on_zero_variance_with_offset(a, b, vx, vy):
+    assert get_mahalanobis_distance(a, b, vx[0], vx[1], vy[0], vy[1]) == float("inf")
+
+
+def test_mahalanobis_zero_distance_with_zero_variance():
+    assert get_mahalanobis_distance(P["O"], P["O"], 0.0, 0.0, 0.0, 0.0) == 0.0
+
+
+@pytest.mark.parametrize(
+    "a,b,vx,vy",
+    [
+        (P["D"], P["E"], V["x23"], V["y45"]),
+        (P["B"], P["A"], V["x15"], V["y2535"]),
+    ],
+)
+def test_mahalanobis_symmetry(a, b, vx, vy):
+    d1 = get_mahalanobis_distance(a, b, vx[0], vx[1], vy[0], vy[1])
+    d2 = get_mahalanobis_distance(b, a, vx[1], vx[0], vy[1], vy[0])
+    assert np.isclose(d1, d2)
+
+
+@pytest.mark.parametrize(
+    "b_small,b_large", [(P["A"], (2.0, 2.0)), ((-1.0, 0.5), (-2.0, 1.0))]
+)
+def test_mahalanobis_monotonic_in_offset(b_small, b_large):
+    a = P["O"]
+    d_small = get_mahalanobis_distance(a, b_small, *V["twos"], *V["twos"])
+    d_large = get_mahalanobis_distance(a, b_large, *V["twos"], *V["twos"])
+    assert d_large > d_small
+
+
+@pytest.mark.parametrize("vx,vy", NEG_VARS)
+def test_mahalanobis_rejects_negative_variance(vx, vy):
+    with pytest.raises(ValueError):
+        get_mahalanobis_distance(P["O"], P["A"], vx[0], vx[1], vy[0], vy[1])
