@@ -202,9 +202,9 @@ def get_average_entropy(data: pd.DataFrame) -> float:
     float
         The mean entropy for the interactions identified.
     """
-    data["species_pair"] = data.apply(__get_species_pair, axis=1)
+    pairs = data.apply(__get_species_pair, axis=1)
 
-    pair_counts = data["species_pair"].value_counts()
+    pair_counts = pairs.value_counts()
 
     total_interactions = pair_counts.sum()
 
