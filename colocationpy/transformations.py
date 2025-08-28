@@ -74,18 +74,59 @@ def apply_time_transform(
 
 
 def apply_time_transform_df(
-    start_time: pd.Timestamp,
     df: pd.DataFrame,
-    interval_duration: pd.Timedelta,
-    replace: bool = True,
-):
-    schema = pa.DataFrameSchema({"timestep": pa.Column()})
-    schema.validate(df)
+    *,
+    timestep_col: str = "timestep",
+    start_time: pd.Timestamp | str = "1970-01-01T00:00:00Z",
+    interval_seconds: int | float = 60,
+    replace: bool = False,
+    out_col: str = "datetime",
+) -> pd.DataFrame:
+    """
+    Map integer timesteps to wall-clock datetimes.
 
-    df["start_time"] = start_time
-    df["datetime"] = df["start_time"] + (interval_duration * df["timestep"])
-    df = df.drop(columns=["start_time"])
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input table containing a timestep column.
+    timestep_col : str, default "timestep"
+        Name of the integer timestep column to convert.
+    start_time : pandas.Timestamp or str, default "1970-01-01T00:00:00Z"
+        Start reference time (inclusive). Strings are parsed with UTC.
+    interval_seconds : int or float, default 60
+        Duration of one timestep in seconds. Must be > 0.
+    replace : bool, default False
+        If True, overwrite ``timestep_col`` with datetimes; otherwise write to ``out_col``.
+    out_col : str, default "datetime"
+        Destination column when ``replace`` is False.
 
-    df = df.drop(columns=["timestep"]) if replace else df
+    Returns
+    -------
+    pandas.DataFrame
+        A copy of ``df`` with datetimes added (or replacing ``timestep_col``).
 
-    return df
+    Raises
+    ------
+    KeyError
+        If ``timestep_col`` is missing.
+    ValueError
+        If ``interval_seconds`` <= 0.
+    """
+    if timestep_col not in df.columns:
+        raise KeyError(f"Missing required column: {timestep_col!r}")
+    if interval_seconds <= 0:
+        raise ValueError("interval_seconds must be positive.")
+
+    out = df.copy()
+    origin = pd.to_datetime(start_time, utc=True)
+
+    steps = pd.to_numeric(out[timestep_col], errors="coerce")
+    # NaNs in steps become NaT in the output (expected, and preferable to crashing)
+    delta = pd.to_timedelta(steps * float(interval_seconds), unit="s")
+    datetimes = origin + delta
+
+    if replace:
+        out[timestep_col] = datetimes
+    else:
+        out[out_col] = datetimes
+    return out
