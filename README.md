@@ -15,7 +15,9 @@ The package provides:
 
 ## Installation
 
+```bash
 pip install colocationpy
+```
 
 ## Quickstart
 
