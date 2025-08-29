@@ -113,7 +113,9 @@ def test_extract_geo_coords():
     np.testing.assert_array_equal(result, geo_coords_expected)
 
 
-@pytest.mark.xfail(reason="Affine model cannot meet 1e-6 tolerance with given points", strict=True)
+@pytest.mark.xfail(
+    reason="Affine model cannot meet 1e-6 tolerance with given points", strict=True
+)
 def test_fit_affine_transform_from_reference_points():
     # Fit A, b that map local -> geo
     A, b = None, None
@@ -141,7 +143,9 @@ def test_apply_affine_transform_points(reference_data, xy_coords, expected):
     np.testing.assert_allclose(out, expected, rtol=0, atol=5e-5)
 
 
-@pytest.mark.xfail(reason="Affine model cannot meet 5 d.p. lon with given points", strict=True)
+@pytest.mark.xfail(
+    reason="Affine model cannot meet 5 d.p. lon with given points", strict=True
+)
 def test_transform_dataframe_like_operation():
     # Simulate a DataFrame transform by applying to all rows at once
     src = extract_local_coords(reference_data)
