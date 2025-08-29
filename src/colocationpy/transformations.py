@@ -150,7 +150,8 @@ def apply_time_transform_df(
     interval_seconds : int or float, default 60
         Duration of one timestep in seconds. Must be > 0.
     replace : bool, default False
-        If True, overwrite ``timestep_col`` with datetimes; otherwise write to ``out_col``.
+        If True, overwrite ``timestep_col`` with datetimes; otherwise write to
+        ``out_col``.
     out_col : str, default "datetime"
         Destination column when ``replace`` is False.
 
@@ -175,7 +176,6 @@ def apply_time_transform_df(
     origin = pd.to_datetime(start_time, utc=True)
 
     steps = pd.to_numeric(out[timestep_col], errors="coerce")
-    # NaNs in steps become NaT in the output (expected, and preferable to crashing)
     delta = pd.to_timedelta(steps * float(interval_seconds), unit="s")
     datetimes = origin + delta
 
@@ -184,7 +184,6 @@ def apply_time_transform_df(
         # Overwrite the timestep column in place
         out[timestep_col] = datetimes
     else:
-        # Write to out_col and drop the original timestep column (matches tests)
         out[out_col] = datetimes
         if timestep_col in out.columns:
             out = out.drop(columns=[timestep_col])

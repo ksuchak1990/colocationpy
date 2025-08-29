@@ -1,22 +1,46 @@
 from ._version import __version__
-from .metrics import (get_average_entropy, get_clustering_coefficient,
-                      get_entropies, get_individual_entropies,
-                      get_interaction_network, get_location_entropies,
-                      get_mutual_information, get_network_modularity,
-                      get_species_interaction_network)
-from .transformations import (AffineFit, apply_affine_transform,
-                              apply_time_transform, apply_time_transform_df,
-                              construct_transformation, extract_geo_coords,
-                              extract_local_coords, fit_affine_transform)
-from .utils import (Barrier, Coordinate, get_all_ids,
-                    get_bhattacharyya_coefficient, get_bhattacharyya_distance,
-                    get_closest_corner, get_co_location_probability,
-                    get_coordinate_centre, get_discrete_proximity,
-                    get_distance, get_distances, get_indoor_distance,
-                    get_mahalanobis_distance, get_opposing_line_segments,
-                    get_spatial_proximity, get_time_difference,
-                    get_triangular_proximity, is_divided_by_barrier,
-                    make_social_edge_list)
+from .metrics import (
+    get_average_entropy,
+    get_clustering_coefficient,
+    get_entropies,
+    get_individual_entropies,
+    get_interaction_network,
+    get_location_entropies,
+    get_mutual_information,
+    get_network_modularity,
+    get_species_interaction_network,
+)
+from .transformations import (
+    AffineFit,
+    apply_affine_transform,
+    apply_time_transform,
+    apply_time_transform_df,
+    construct_transformation,
+    extract_geo_coords,
+    extract_local_coords,
+    fit_affine_transform,
+)
+from .utils import (
+    Barrier,
+    Coordinate,
+    get_all_ids,
+    get_bhattacharyya_coefficient,
+    get_bhattacharyya_distance,
+    get_closest_corner,
+    get_co_location_probability,
+    get_coordinate_centre,
+    get_discrete_proximity,
+    get_distance,
+    get_distances,
+    get_indoor_distance,
+    get_mahalanobis_distance,
+    get_opposing_line_segments,
+    get_spatial_proximity,
+    get_time_difference,
+    get_triangular_proximity,
+    is_divided_by_barrier,
+    make_social_edge_list,
+)
 
 __all__ = [
     "__version__",
