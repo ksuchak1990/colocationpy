@@ -88,8 +88,6 @@ def __get_counts(
 def get_individual_entropies(
     data: pd.DataFrame, species_map: pd.DataFrame
 ) -> pd.DataFrame:
-    # required_columns = ["uid_x", "uid_y", "species_x", "species_y", "coloc_prob"]
-    # check_for_required_columns(data, required_columns)
     DataFrameSchema(
         {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
     ).validate(data, lazy=False)
@@ -174,16 +172,21 @@ def get_entropies(
     ----------
     data : pandas.DataFrame
         Input table.
-        When ``how == "individual"``, requires columns ``"uid_x"``, ``"uid_y"``.
-        When ``how == "location"``, requires columns ``location_col`` and ``"uid"``.
+        When ``how == "individual"``, requires columns
+          ``"uid_x"``, ``"uid_y"``.
+        When ``how == "location"``, requires columns
+          ``location_col`` and ``"uid"``.
     species_map : pandas.DataFrame
-        Mapping of individuals to species with columns ``"uid"`` and ``"species"``.
+        Mapping of individuals to species with columns
+          ``"uid"`` and ``"species"``.
     how : {"location", "individual"}, default "location"
         Aggregation strategy:
         - ``"location"``: entropy of species mix per location.
-        - ``"individual"``: entropy of species mix across each individual's contacts.
+        - ``"individual"``: entropy of species mix across each individual's
+          contacts.
     location_col : str, default "locationID"
-        Column in ``data`` naming the location identifier (used when ``how == "location"``).
+        Column in ``data`` naming the location identifier
+        (used when ``how == "location"``).
 
     Returns
     -------
@@ -218,32 +221,6 @@ def get_entropies(
     raise ValueError("Unsupported value for 'how'. Use 'location' or 'individual'.")
 
 
-# def get_entropies(data: pd.DataFrame) -> pd.Series:
-#     """
-#     Calculate entropies for a DataFrame of co-location instances.
-
-#     Parameters
-#     ----------
-#     data : pd.DataFrame
-#         A DataFrame of co-location instances, with columns "species_x" and
-#         "species_y" indicating the types/species of the two individuals involved
-#         in the co-location.
-
-#     Returns
-#     -------
-#     pd.Series
-#         A Series of entropy measures for each of the co-location instances,
-#         where 1.0 means that the two types are not the same, and 0.0 means that
-#         they are the same.
-#     """
-#     species_proportions = __get_proportions(data)
-
-#     entropies = data.apply(
-#         __get_record_entropy, axis=1, species_proportions=species_proportions
-#     )
-#     return entropies
-
-
 def __get_species_pair(row: pd.Series):
     return tuple(sorted([row["species_x"], row["species_y"]]))
 
@@ -256,8 +233,8 @@ def get_average_entropy(data: pd.DataFrame) -> float:
     ----------
     data : pd.DataFrame
         A DataFrame of co-location instances, with columns "species_x" and
-        "species_y" indicating the types/species of the two individuals involved
-        in the co-location.
+        "species_y" indicating the types/species of the two individuals
+        involved in the co-location.
 
     Returns
     -------
@@ -286,12 +263,14 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
     Parameters
     ----------
     data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+        A DataFrame of co-location instances, with columns "species_x" and
+        "species_y".
 
     Returns
     -------
     pd.DataFrame
-        A DataFrame containing the joint probabilities of species_x and species_y.
+        A DataFrame containing the joint probabilities of species_x and
+        species_y.
     """
     SPECIES_ONLY_SCHEMA = DataFrameSchema(
         {"species_x": Column(object), "species_y": Column(object)}, strict=False
@@ -301,7 +280,6 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
     # Calculate joint frequencies (counts)
     joint_freq = pd.crosstab(data["species_x"], data["species_y"])
 
-    # Convert frequencies to joint probabilities by dividing by the total number of instances
     total_instances = len(data)
     joint_prob = joint_freq / total_instances
 
@@ -310,21 +288,26 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
 
 def __get_marginal_distribution(data: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """
-    Calculate the marginal probability distributions for ``species_x`` and ``species_y``.
+    Calculate the marginal probability distributions for ``species_x`` and
+    ``species_y``.
 
     Parameters
     ----------
     data : pandas.DataFrame
-        Co-location records with required columns ``"species_x"`` and ``"species_y"``.
+        Co-location records with required columns ``"species_x"`` and
+        ``"species_y"``.
         Extra columns are permitted and ignored.
 
     Returns
     -------
     tuple of pandas.Series
         ``(p_x, p_y)``, where:
-        - ``p_x`` is the marginal distribution over ``species_x`` (index: species label).
-        - ``p_y`` is the marginal distribution over ``species_y`` (index: species label).
-        Probabilities sum to 1.0 along each Series. Empty input returns empty Series.
+        - ``p_x`` is the marginal distribution over ``species_x``
+          (index: species label).
+        - ``p_y`` is the marginal distribution over ``species_y``
+          (index: species label).
+        Probabilities sum to 1.0 along each Series. Empty input returns empty
+        Series.
 
     Raises
     ------
@@ -399,7 +382,7 @@ def get_mutual_information(data: pd.DataFrame) -> float:
     pyv = py.to_numpy()[None, :]
 
     with np.errstate(divide="ignore", invalid="ignore"):
-        ratio = np.where(pxy > 0, pxy / (pxv * pyv), 1.0)  # 1.0 so log2=0 where pxy==0
+        ratio = np.where(pxy > 0, pxy / (pxv * pyv), 1.0)
         terms = np.where(pxy > 0, pxy * np.log2(ratio), 0.0)
 
     return float(terms.sum())
@@ -414,18 +397,20 @@ def get_species_interaction_network(
     Build an undirected species–species co-occurrence network.
 
     Edge weight between two species is the symmetric co-occurrence count:
-    count(species_x→species_y) + count(species_y→species_x). Self-loops are removed.
+    count(species_x→species_y) + count(species_y→species_x). Self-loops are
+    removed.
 
     Parameters
     ----------
     data : pandas.DataFrame
-        Pairwise contact records with required columns "species_x", "species_y".
+        Pairwise contact records with required columns "species_x",
+        "species_y".
         Extra columns are permitted and ignored.
     normalise : {"sum", "jaccard", None}, optional
         If provided, convert integer counts to:
         - "sum": divide by the total number of contacts (global normalisation).
-        - "jaccard": Jaccard coefficient based on co-occurrence over the union of
-          appearances per species (values in [0, 1]).
+        - "jaccard": Jaccard coefficient based on co-occurrence over the union
+          of appearances per species (values in [0, 1]).
         None (default) returns raw integer counts.
 
     Returns
@@ -508,17 +493,13 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
     """
     CONTACTS_SCHEMA.validate(data, lazy=False)
 
-    # Initialize an undirected graph
     graph = nx.Graph()
 
-    # Create edges between individuals (id_x and id_y) using vectorized operations
     edges = list(zip(data["uid_x"], data["uid_y"]))
 
     # Add edges to the graph
     graph.add_edges_from(edges)
 
-    # Add species as node attributes using vectorized operations
-    # Concatenate the 'id_x' and 'id_y' columns along with their respective species
     nodes_data = pd.concat(
         [
             data[["uid_x", "species_x"]].rename(
@@ -547,7 +528,8 @@ def get_network_modularity(data: pd.DataFrame) -> float:
     Parameters
     ----------
     data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+        A DataFrame of co-location instances, with columns "species_x" and
+        "species_y".
 
     Returns
     -------
@@ -577,12 +559,14 @@ def get_network_modularity(data: pd.DataFrame) -> float:
 
 def get_clustering_coefficient(data: pd.DataFrame) -> float:
     """
-    Calculate the clustering coefficient for a DataFrame of co-location instances.
+    Calculate the clustering coefficient for a DataFrame of co-location
+    instances.
 
     Parameters
     ----------
     data : pd.DataFrame
-        A DataFrame of co-location instances, with columns "species_x" and "species_y".
+        A DataFrame of co-location instances, with columns "species_x" and
+        "species_y".
 
     Returns
     -------

@@ -3,7 +3,7 @@ A collection of utility functions.
 """
 
 import logging
-from typing import List, Tuple, TypeAlias, Union
+from typing import TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -12,9 +12,9 @@ from shapely import intersects
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 
 # Define types
-Numeric = Union[int, float]
-Coordinate: TypeAlias = Tuple[float, float]
-Barrier = Union[LineString, Polygon]
+Numeric = int | float
+Coordinate: TypeAlias = tuple[float, float]
+Barrier = LineString | Polygon
 
 
 # Constants
@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 # Functions
-def __check_required_columns(df: pd.DataFrame, rc: List[str]):
+def __check_required_columns(df: pd.DataFrame, rc: list[str]):
     """
     Ensure that a dataframe has a collection of required columns.
 
@@ -375,7 +375,8 @@ def get_mahalanobis_distance(
     y_uncertainty2: float,
 ) -> float:
     """
-    Mahalanobis-like distance between two 2D points using axis-aligned covariances.
+    Mahalanobis-like distance between two 2D points using axis-aligned
+    covariances.
 
     Parameters
     ----------
@@ -393,9 +394,11 @@ def get_mahalanobis_distance(
 
     Notes
     -----
-    - “Uncertainty” here explicitly means **variance (σ²)**, not standard deviation.
-    - If either combined variance in an axis is zero and the corresponding offset is non-zero,
-      the distance is infinite; if both offsets are zero, the distance is zero.
+    - “Uncertainty” here explicitly means **variance (σ²)**, not standard
+      deviation.
+    - If either combined variance in an axis is zero and the corresponding
+      offset is non-zero, the distance is infinite; if both offsets are zero,
+      the distance is zero.
     """
     if min(x_uncertainty1, x_uncertainty2, y_uncertainty1, y_uncertainty2) < 0:
         raise ValueError("Uncertainties must be non-negative variances (σ²).")
@@ -457,7 +460,7 @@ def get_bhattacharyya_distance(df: pd.DataFrame) -> pd.Series:
 
 def make_social_edge_list(
     individual_data: pd.DataFrame, in_group_prob: float
-) -> List[Tuple[int, int]]:
+) -> list[tuple[int, int]]:
     schema = pa.DataFrameSchema(
         {
             "uid": pa.Column(),
