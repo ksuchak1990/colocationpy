@@ -6,6 +6,8 @@ import pandas as pd
 import pandera as pa
 from scipy.optimize import minimize
 
+GEO_COORD_ORDER = ("lat", "lon")
+
 
 @dataclass(frozen=True)
 class AffineFit:
@@ -26,7 +28,8 @@ def extract_local_coords(reference_data: dict[str, dict[str, float]]) -> np.ndar
 
 
 def extract_geo_coords(reference_data: dict[str, dict[str, float]]) -> np.ndarray:
-    return np.array([(v["lon"], v["lat"]) for v in reference_data.values()])
+    k0, k1 = GEO_COORD_ORDER  # ("lat", "lon")
+    return np.array([(v[k0], v[k1]) for v in reference_data.values()], dtype=float)
 
 
 def calculate_residuals(transform_params, local_coords, geo_coords):
@@ -37,11 +40,47 @@ def calculate_residuals(transform_params, local_coords, geo_coords):
     return np.sum((geo_coords - transformed) ** 2)
 
 
-def apply_affine_transform(xy_coords, transform_params):
-    # Function to apply the affine transformation
-    a, b, c, d, e, f = transform_params
-    transformed = np.dot(xy_coords, [[a, b], [d, e]]) + [c, f]
-    return transformed
+def apply_affine_transform(
+    points: np.ndarray, A: np.ndarray, b: np.ndarray
+) -> np.ndarray:
+    """
+    Apply y = A x + b to 2D points.
+
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Array of shape (N, 2).
+    A : numpy.ndarray
+        Affine matrix of shape (2, 2).
+    b : numpy.ndarray
+        Translation vector of shape (2,).
+
+    Returns
+    -------
+    numpy.ndarray
+        Transformed points, shape (N, 2).
+
+    Raises
+    ------
+    ValueError
+        If input shapes are incompatible.
+    """
+    P = np.asarray(points, dtype=float)
+    A = np.asarray(A, dtype=float)
+    B = np.asarray(b, dtype=float)
+
+    if A.shape != (2, 2):
+        raise ValueError("A must have shape (2, 2).")
+    if B.shape != (2,):
+        raise ValueError("b must have shape (2,).")
+
+    if P.ndim == 1:
+        if P.shape != (2,):
+            raise ValueError("points must have shape (2,) or (N, 2).")
+        return (A @ P) + B  # shape (2,)
+    if P.ndim == 2 and P.shape[1] == 2:
+        return P @ A.T + B  # shape (N, 2)
+    raise ValueError("points must have shape (2,) or (N, 2).")
 
 
 def transform_dataframe(
@@ -140,10 +179,15 @@ def apply_time_transform_df(
     delta = pd.to_timedelta(steps * float(interval_seconds), unit="s")
     datetimes = origin + delta
 
+    out = df.copy()
     if replace:
+        # Overwrite the timestep column in place
         out[timestep_col] = datetimes
     else:
+        # Write to out_col and drop the original timestep column (matches tests)
         out[out_col] = datetimes
+        if timestep_col in out.columns:
+            out = out.drop(columns=[timestep_col])
     return out
 
 
@@ -222,24 +266,11 @@ def fit_affine_transform(
     if src.shape[0] < 2:
         raise ValueError("At least two point pairs are required.")
 
-    # Initialise with OLS (good numerical starting point)
-    A0, b0, _ = _ols_affine(src, dst)
-    theta0 = np.hstack([A0.ravel(), b0])
-
-    res = minimize(
-        _affine_objective,
-        theta0,
-        args=(src, dst),
-        method="BFGS",
-        options={"gtol": tol, "maxiter": maxiter},
-    )
-
-    A_opt, b_opt = _unpack_affine(res.x)
-    rms = float(np.sqrt(res.fun))
+    A, b, rms = _ols_affine(src, dst)
     return AffineFit(
-        A=A_opt,
-        b=b_opt,
+        A=A,
+        b=b,
         rms_error=rms,
-        success=bool(res.success),
-        message=str(res.message),
+        success=True,
+        message="Closed-form OLS affine fit",
     )
