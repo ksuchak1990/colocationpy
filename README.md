@@ -42,3 +42,7 @@ Example outline:
 
 * **colocationpy.utils**
   Distance measures, proximity functions, barrier handling, and other helpers used internally and available for advanced users.
+
+## Funding
+
+This package is being developed as part of work on the [EPSRC Digital Health Hub for Antimicrobial Resistance](https://www.digitalamr.org/) (EP/X031276/1).
