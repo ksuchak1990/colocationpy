@@ -1,11 +1,27 @@
 # `colocationpy`
 
-[![Ruff linting and formatting](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml)
+> [!WARNING]  
+> This package is in the early stages of development and should not be installed unless you are one of the developers.
 
-[![Run Pytest with Conda](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml)
+[![PyPI - Version](https://img.shields.io/pypi/v/colocationpy.svg)](https://pypi.org/project/colocationpy)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/colocationpy.svg)](https://pypi.org/project/colocationpy)
+[![Lint](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml)
+[![Tests](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml)
 
 > A package to identify instances of co-location between mobile individuals in a
 > population.
+
+-----
+
+## Table of contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+- [License](#license)
+- [Funding](#funding)
+
+## Features
 
 The package provides:
 
@@ -42,6 +58,11 @@ Example outline:
 
 * **colocationpy.utils**
   Distance measures, proximity functions, barrier handling, and other helpers used internally and available for advanced users.
+
+## License
+
+`colocationpy` is distributed under the terms of the
+[BSD-3-Clause](https://github.com/ksuchak1990/colocationpy/blob/main/LICENSE) license.
 
 ## Funding
 
