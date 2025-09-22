@@ -7,6 +7,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/colocationpy.svg)](https://pypi.org/project/colocationpy)
 [![Lint](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/ruff.yml)
 [![Tests](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml/badge.svg)](https://github.com/ksuchak1990/colocationpy/actions/workflows/pytest.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17176568.svg)](https://doi.org/10.5281/zenodo.17176568)
 
 > A package to identify instances of co-location between mobile individuals in a
 > population.

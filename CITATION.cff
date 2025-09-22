@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: colocationpy
+message: If you use this software, please cite it.
+type: software
+authors:
+  - family-names: Suchak
+    given-names: Keiran
+    orcid: "https://orcid.org/0000-0002-7008-2027"
+repository-code: "https://github.com/ksuchak1990/colocationpy"
+url: "https://pypi.org/project/colocationpy/"
+abstract: " Identifying when people are in the same place at the same time."
+license: BSD-3-Clause
+keywords: [python, pypi, geospatial, gis]
+version: 0.1.8
+doi: 10.5281/zenodo.17176568 
+preferred-citation:
+  type: software
+  title: colocationpy
+  authors:
+    - family-names: Suchak
+      given-names: Keiran
+  year: 2025
+  10.5281/zenodo.17176568
