@@ -41,6 +41,7 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/ksuchak1990/colocationpy/"
 Issues = "https://github.com/ksuchak1990/colocationpy/issues"
+DOI = "https://doi.org/10.5281/zenodo.17176568"
 
 [tool.setuptools.packages.find]
 where = ["src"]
