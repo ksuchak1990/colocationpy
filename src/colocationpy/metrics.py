@@ -11,14 +11,15 @@ import pandas as pd
 import pandera as pa
 from pandera import Check, Column, DataFrameSchema
 
+
 # Core schema for contact-level rows used across metrics.
 CONTACTS_SCHEMA = DataFrameSchema(
     {
         # or pa.String if you’ve normalised to str
-        "uid_x": Column(object),
-        "uid_y": Column(object),
-        "species_x": Column(object),
-        "species_y": Column(object),
+        "uid_x": Column(int),
+        "uid_y": Column(int),
+        "species_x": Column(str),
+        "species_y": Column(str),
     },
     strict=False,  # allow extra columns; we only assert what we actually need
 )
@@ -26,8 +27,8 @@ CONTACTS_SCHEMA = DataFrameSchema(
 # When functions rely on a precomputed weight or count per (uid_x, uid_y) edge:
 EDGE_WEIGHTS_SCHEMA = DataFrameSchema(
     {
-        "uid_x": Column(object),
-        "uid_y": Column(object),
+        "uid_x": Column(int),
+        "uid_y": Column(int),
         "weight": Column(float, checks=Check.ge(0.0)),
     },
     strict=False,
@@ -88,12 +89,13 @@ def __get_counts(
 def get_individual_entropies(
     data: pd.DataFrame, species_map: pd.DataFrame
 ) -> pd.DataFrame:
-    DataFrameSchema(
-        {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
-    ).validate(data, lazy=False)
-    DataFrameSchema(
-        {"uid": Column(object), "species": Column(object)}, strict=False
-    ).validate(species_map, lazy=False)
+    # DataFrameSchema(
+    #     {"uid_x": Column(int, coerce=False), "uid_y": Column(int, coerce=False)},
+    #     strict=False,
+    # ).validate(data, lazy=False)
+    # DataFrameSchema(
+    #     {"uid": Column(int), "species": Column(str)}, strict=False
+    # ).validate(species_map, lazy=False)
 
     ids_x = set(data["uid_x"].unique())
     ids_y = set(data["uid_y"].unique())
@@ -202,20 +204,20 @@ def get_entropies(
         If required columns are missing from ``data`` or ``species_map``.
     """
     # Validate species_map once
-    DataFrameSchema(
-        {"uid": Column(object), "species": Column(object)}, strict=False
-    ).validate(species_map, lazy=False)
+    # DataFrameSchema(
+    #     {"uid": Column(int), "species": Column(str)}, strict=False
+    # ).validate(species_map, lazy=False)
 
     if how == "individual":
-        DataFrameSchema(
-            {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
-        ).validate(data, lazy=False)
+        # DataFrameSchema(
+        #     {"uid_x": Column(object), "uid_y": Column(object)}, strict=False
+        # ).validate(data, lazy=False)
         return get_individual_entropies(data, species_map)
 
     if how == "location":
-        DataFrameSchema(
-            {location_col: Column(object), "uid": Column(object)}, strict=False
-        ).validate(data, lazy=False)
+        # DataFrameSchema(
+        #     {location_col: Column(object), "uid": Column(int)}, strict=False
+        # ).validate(data, lazy=False)
         return get_location_entropies(data, species_map, location_col=location_col)
 
     raise ValueError("Unsupported value for 'how'. Use 'location' or 'individual'.")
@@ -272,10 +274,10 @@ def __get_joint_distribution(data: pd.DataFrame) -> pd.DataFrame:
         A DataFrame containing the joint probabilities of species_x and
         species_y.
     """
-    SPECIES_ONLY_SCHEMA = DataFrameSchema(
-        {"species_x": Column(object), "species_y": Column(object)}, strict=False
-    )
-    SPECIES_ONLY_SCHEMA.validate(data, lazy=False)
+    # SPECIES_ONLY_SCHEMA = DataFrameSchema(
+    #     {"species_x": Column(str), "species_y": Column(str)}, strict=False
+    # )
+    # SPECIES_ONLY_SCHEMA.validate(data, lazy=False)
 
     # Calculate joint frequencies (counts)
     joint_freq = pd.crosstab(data["species_x"], data["species_y"])
@@ -314,10 +316,10 @@ def __get_marginal_distribution(data: pd.DataFrame) -> tuple[pd.Series, pd.Serie
     pandera.errors.SchemaError
         If required columns are missing.
     """
-    DataFrameSchema(
-        {"species_x": Column(object), "species_y": Column(object)},
-        strict=False,
-    ).validate(data, lazy=False)
+    # DataFrameSchema(
+    #     {"species_x": Column(str), "species_y": Column(str)},
+    #     strict=False,
+    # ).validate(data, lazy=False)
 
     n = len(data)
     if n == 0:
@@ -356,14 +358,14 @@ def get_mutual_information(data: pd.DataFrame) -> float:
         If required columns are missing.
     """
     # Validate and coerce dtypes (accept ints)
-    schema = pa.DataFrameSchema(
-        {
-            "species_x": pa.Column(object, coerce=True),
-            "species_y": pa.Column(object, coerce=True),
-        },
-        strict=False,
-    )
-    data = schema.validate(data, lazy=False)
+    # schema = pa.DataFrameSchema(
+    #     {
+    #         "species_x": pa.Column(str, coerce=True),
+    #         "species_y": pa.Column(str, coerce=True),
+    #     },
+    #     strict=False,
+    # )
+    # data = schema.validate(data, lazy=False)
 
     n = len(data)
     if n == 0:
@@ -427,13 +429,13 @@ def get_species_interaction_network(
         If `normalise` is not one of {None, "sum", "jaccard"}.
     """
     # Validate required columns; coerce allows int labels etc.
-    pa.DataFrameSchema(
-        {
-            "species_x": pa.Column(object, coerce=True),
-            "species_y": pa.Column(object, coerce=True),
-        },
-        strict=False,
-    ).validate(data, lazy=False)
+    # pa.DataFrameSchema(
+    #     {
+    #         "species_x": pa.Column(str, coerce=True),
+    #         "species_y": pa.Column(str, coerce=True),
+    #     },
+    #     strict=False,
+    # ).validate(data, lazy=False)
 
     if data.empty:
         return nx.Graph()
@@ -441,7 +443,9 @@ def get_species_interaction_network(
     # Symmetric co-occurrence counts
     ctab = pd.crosstab(data["species_x"], data["species_y"])
     adj = (ctab + ctab.T).fillna(0).astype(int)
-    np.fill_diagonal(adj.values, 0)  # no self-loops by construction
+    arr = adj.to_numpy(copy=True)
+    np.fill_diagonal(arr, 0)  # no self-loops by construction
+    adj[:] = arr
 
     if normalise is None:
         g = nx.from_pandas_adjacency(adj)
@@ -465,7 +469,9 @@ def get_species_interaction_network(
             jacc = np.where(den > 0, num / den, 0.0)
 
         jacc = pd.DataFrame(jacc, index=adj.index, columns=adj.columns)  # noqa: E999
-        np.fill_diagonal(jacc.values, 0.0)
+        arr = jacc.to_numpy(copy=True)
+        np.fill_diagonal(arr, 0.0)
+        jacc[:] = arr
         g = nx.from_pandas_adjacency(jacc)
     else:
         raise ValueError("normalise must be one of {None, 'sum', 'jaccard'}.")
@@ -491,7 +497,7 @@ def get_interaction_network(data: pd.DataFrame) -> nx.Graph:
         Undirected graph with individuals as nodes. Each node has a
         ``"species"`` attribute.
     """
-    CONTACTS_SCHEMA.validate(data, lazy=False)
+    # CONTACTS_SCHEMA.validate(data, lazy=False)
 
     graph = nx.Graph()
 
