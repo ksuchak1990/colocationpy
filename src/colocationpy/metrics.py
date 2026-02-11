@@ -11,7 +11,6 @@ import pandas as pd
 import pandera as pa
 from pandera import Check, Column, DataFrameSchema
 
-
 # Core schema for contact-level rows used across metrics.
 CONTACTS_SCHEMA = DataFrameSchema(
     {

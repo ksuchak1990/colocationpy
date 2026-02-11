@@ -54,14 +54,13 @@ colocationpy = ["py.typed"]
 addopts = "-q"
 testpaths = ["tests"]
 
-[tool.ruff]
-line-length = 88
-target-version = "py310"
-select = ["E", "F", "I", "UP"]
-ignore = []
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "ruff>=0.14.14",
 ]
