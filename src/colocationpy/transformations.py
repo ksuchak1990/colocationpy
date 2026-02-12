@@ -100,7 +100,7 @@ def transform_dataframe(
     transformed_coords = apply_affine_transform(xy_coords, A, b)
 
     # transformed_coords = apply_affine_transform(xy_coords, transform_params)
-    df["lon"], df["lat"] = transformed_coords[:, 0], transformed_coords[:, 1]
+    df["lat"], df["lon"] = transformed_coords[:, 0], transformed_coords[:, 1]
 
     # Get rid of original x-y columns if necessary
     df = df.drop(columns=["x", "y"]) if replace else df
